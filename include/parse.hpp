@@ -9,10 +9,10 @@ namespace bfs = boost::filesystem;
 struct params {
 	bfs::path in;
 	bfs::path out;
-	int notch;
-	float rotation;
-	int x, y;
-	int h,w,d;
+	int notch = 0;
+	double rotation = 0.0;
+	int x = 0, y = 0;
+	int h = 0,w = 0,d = 0;
 };
 
 params* parseInputs( int argc, char** argv )
@@ -43,9 +43,9 @@ params* parseInputs( int argc, char** argv )
 	}
 	else
 	{
-		cout << "Usage: wpart INPUT_PATH OUTPUT_PATH ROTATION_DEGREES" <<
+		cout << "Usage: wpart INPUT_PATH OUTPUT_PATH ROTATION_DEGREES_CCW" <<
 		" NOTCH_LOCATION X Y HEIGHT WIDTH DEPTH" << endl <<
-		"   or: wpart INPUT_PATH OUTPUT_PATH ROTATION_DEGREES NOTCH_LOCATION X Y"
+		"   or: wpart INPUT_PATH OUTPUT_PATH ROTATION_DEGREES_CCW NOTCH_LOCATION X Y"
 		<< endl;
 		exit(EXIT_FAILURE);
 	}
@@ -69,7 +69,7 @@ params* parseInputs( int argc, char** argv )
 	<< "OUTPUT: " << thisparams->out << endl
 	<< "ROTATION: " << thisparams->rotation << endl
 	<< "NOTCH: Slice " << thisparams->notch << endl
-	<< "ROI: ("<< thisparams->x << "," << thisparams->y << ")" << endl;
+	<< "ROI UPPER LEFT: ("<< thisparams->x << "," << thisparams->y << ")" << endl;
 	printf("SUBSET DIMENSIONS: (%u, %u, %u)\n", thisparams->h, thisparams->w, thisparams->d);
 	
 	return thisparams;
