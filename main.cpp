@@ -7,7 +7,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
-//#include <iostream>
 
 using namespace cv;
 using namespace std;

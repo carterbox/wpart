@@ -93,25 +93,25 @@ vector<myslice> findtiff( bfs::path p )
 	return imstack;
 }
 
-Mat sampleRotCrop( Mat in32, const params* profile )
+Mat sampleRotCrop( Mat image32, const params* profile )
 //downsamples a greyscale image to 32bit rotates and crops it accoring to params
 {
 	CV_Assert( profile != NULL && profile->w > 0 && profile->h > 0
-							   && in32.size().width > profile->w
-							   && in32.size().height > profile->h );
+							   && image32.size().width > profile->w
+							   && image32.size().height > profile->h );
+	//convert to 8bit
+	Mat image8;
+	image32.convertTo(image8, CV_8UC1);
 	
 	//rotate the image
-	Point center = Point( in32.cols/2, in32.rows/2 );
+	Point center = Point( image8.cols/2, image8.rows/2 );
 	Mat rot_mat = getRotationMatrix2D( center, profile->rotation, 1.0 );	
-	warpAffine( in32, in32, rot_mat, in32.size(), INTER_CUBIC );
-
-	Mat slice8;
-	convertScaleAbs( in32, slice8, 1.0, -79); //converts to 8bit
+	warpAffine( image8, image8, rot_mat, image8.size(), INTER_CUBIC );
 
 	//crop the image
-	slice8 = Mat( slice8, Rect( profile->x, profile->y, profile->w, profile->h ));
+	image8 = Mat( image8, Rect( profile->x, profile->y, profile->w, profile->h ));
 	
-	return slice8;
+	return image8;
 }
 
 vector<myslice> createStack( const params profile )
