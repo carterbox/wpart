@@ -2,7 +2,7 @@ function [ output ] = woodcolor( CorBW, segmented, numSegments, varargin )
 % woodcolor( CorBW, segmented, numSegments )
 % woodcolor( CorBW, segmented, numSegments, logfile, showresult, image )
 %WOODCOLOR takes images segmented into parts 1...NUMSEGMENTS and remaps the
-%numbers to colors or grescale values from 1...255.
+%   numbers to colors or grescale values from 1...255.
 if isempty(varargin)
     logfile = 1;
     showresult = 0;

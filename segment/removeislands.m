@@ -1,20 +1,37 @@
-function [ B ] = removeislands( A, numparts, islandsize )
+function [ B ] = removeislands( A, ~, minislandsize )
+%REMOVEISLANDS removes islands from each phase of the image. #parallel
+% The image is segmented into NUMPARTS layers where the Nth layer is a
+% boolean array of x >= N. Island are removed from each layer and then
+% blended downwards.
+%
+% INPUTS
+%   A: a presegemented image whose values are between 1 and NUMPARTS
+%   numparts: the total number of phases in the image.
+%   minislandsize: the minimum number of pixels an island requires to
+%   survive bwareopen at the give CONNECTIVITY setting.
+%
+% OUTPUTS
+%   B (uint8): the segmented image with islands removed.
+%
+% GLOBAL VARIABLES
 
-P = islandsize;
-z = 8; %6,18, or 26;
+CONNECTIVITY = 8;   % 2D: 4 or 8
+                    % 3D: 6, 18, or 26;
+                    
+%% -----------------------------------------------------------------------
+numparts = max(A(:));
+binarylayers = cell(numparts,1);
 
-BW = cell(numparts,1);
-%make some binary arrays of each of layers of segements and remove islands
+% Convert the image into a sequency of binary arrays and remove islands.
 parfor i = 3:numparts
-    BW{i} = A >= i;
-    BW{i} = bwareaopen(BW{i}, P, z);
+    binarylayers{i} = uint8(bwareaopen(A >= i, minislandsize, CONNECTIVITY));
     %figure(i),imshow(uint8(BW{i}(:,:,1)*255));
 end
 
-B = ones(size(A)) + 1; %merge the two bottom segments into one
+% Recombine the layers.
+B = ones(size(A),'uint8') + 1; % The bottom two layers are both background.
 for i = 3:numparts;
-    B = B + BW{i};
+    B = B + binarylayers{i};
 end
-
 end
 
