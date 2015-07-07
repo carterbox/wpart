@@ -1,7 +1,7 @@
 % This script segments proj_74-79 which are a Douglas-fir specimen that has
 % a visible cracking that progresses in each scan.
 
-for key = 3:5
+for key = 2:6
 %% Input Parameters ------------------------------------------------------
 
 ROTATIONCW = 27;
@@ -17,15 +17,28 @@ switch key
     case 2
          indir = '/media/OCT14M/Reconstructions/recon_proj_75';
          notch = 1726;
+         X_CORNER = X_CORNER + 32;
+         Y_CORNER = Y_CORNER + 45;
+    case 6
+         indir = '/media/OCT14M/Reconstructions/recon_proj_76';
+         notch = 1726;
+         X_CORNER = X_CORNER + 46;
+         Y_CORNER = Y_CORNER + 67;
     case 3
          indir = '/media/OCT14M/Reconstructions/recon_proj_77';
          notch = 1726;
+         X_CORNER = X_CORNER + 105;
+         Y_CORNER = Y_CORNER + 115;
     case 4
          indir = '/media/OCT14M/Reconstructions/recon_proj_78';
          notch = 1726;
+         X_CORNER = X_CORNER + 140;
+         Y_CORNER = Y_CORNER + 117;
     case 5
          indir = '/media/OCT14M/Reconstructions/recon_proj_79';
          notch = 1866;
+         X_CORNER = X_CORNER + 19;
+         Y_CORNER = Y_CORNER + 260;
 end
 
 [~, samplename, ~] = fileparts(indir);
@@ -33,6 +46,7 @@ OUTDIR = ['/media/OCT14M/Segmentations/' samplename];
 kNUMGDISTS = 4;
 kBITDEPTH = 8;
 STACKDEPTH = 1600;
+numworkers = 6;
  
 %% Creating a Log file ---------------------------------------------------
 
@@ -50,7 +64,7 @@ fprintf(logfile, 'notch: %i ', notch);
 %% Loading rotating cropping and scaling ---------------------------------
 
 if 0 == exist([ OUTDIR '/subset' ],'dir')
-    if size(gcp) == 0, p = parpool(4); else p = gcp; end
+    if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
     
     stack = makeSubset(indir, ROTATIONCW, X_CORNER, Y_CORNER, kSTACKWIDTH,...
                        kSTACKHEIGHT, STACKDEPTH, notch);
@@ -80,7 +94,7 @@ save([OUTDIR '/labels.mat'], 'labels');
 print([OUTDIR '/mixedgaussians'], '-dpng');
 
 %% Segmenting and Smoothing ----------------------------------------------
-if size(gcp) == 0, p = parpool(4); else p = gcp; end
+if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
 
 % Segment the image according to the lookup-table.
 % fprintf('Mapping...\n');
