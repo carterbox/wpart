@@ -1,4 +1,4 @@
-function [ labels ] = findThresholds( stack, numdists, bitdepth, logfile )
+function labels = findThresholds( stack, numdists, bitdepth, logfile )
 %FINDTHRESHOLDS uses expectation maximization to cluster pixel
 % intensitities into groups.
 % 
@@ -9,7 +9,7 @@ function [ labels ] = findThresholds( stack, numdists, bitdepth, logfile )
 %   bitdepth: the bitdepth of the images in the stack
 %
 % OUTPUTS
-%   labels: a lookup table from each pixel value a group.
+%   labels (uint8): a lookup table from each pixel value a group.
 %   group = labels(pixel_value). If NUMDISTS = 4, then an additional group
 %   will be added to boost that number to 5.
 %
@@ -20,7 +20,7 @@ function [ labels ] = findThresholds( stack, numdists, bitdepth, logfile )
 %% -----------------------------------------------------------------------
 % GLOBAL VARIABLES
 MAXITER = 500; % Maxium iterations for EM fitting of gaussians
-REPS = 3; % Number of times to attempt EM fitting of guassians
+REPS = 5; % Number of times to attempt EM fitting of guassians
 MAXINT = 2^bitdepth - 1;
 UPPERTHRESH = MAXINT*0.99;
 [~,~,z] = size(stack);
@@ -65,12 +65,12 @@ range = 0:MAXINT;
 
 % Assign each gray to a group.
 [labels, separatedpdfs] = getlabels(range',a,s,c);
-figure, subplot(2,1,2),
-plot(range',labels'); % Plot the ranges.
-axis([0 255 1 5]);
-daspect([5 1 1]);
+figure, %subplot(2,1,2),
+% plot(range',labels'); % Plot the ranges.
+% axis([0 255 1 5]);
+% daspect([5 1 1]);
 
-subplot(2,1,1),
+%subplot(2,1,1),
 % Plot the histogram in the background.
 histogram(sample, MAXINT,'Normalization','pdf',...
                   'EdgeColor',[0.5 0.5 0.5],'FaceColor',[0.5 0.5 0.5]);
@@ -101,7 +101,7 @@ function [ labels, probabilities ] = getlabels(range,means,sigma,proportions)
 % INPUTS
 %
 % OUTPUTS
-%   labels: a lookup table from each pixel value to a group.
+%   labels (uint8): a lookup table from each pixel value to a group.
 %   group = labels(pixel_value).
 %   probabilities: RxN table where R is the length of RANGE and N is the
 %   number of pdfs. Each column is the the values of one of the pdfs.
@@ -111,6 +111,7 @@ if isrow(means), disp('means is row!'); end
 if isrow(sigma), disp('sigma is row!'); end
 numdists = length(means);
 
+% TODO: Figure out a way to better sort the distributions.
 % Sort the distributions by their right edge.
 sortme = sortrows([means,sigma,means+2.*sigma],3);
 means = sortme(:,1); sigma = sortme(:,2);
@@ -126,10 +127,11 @@ end
 
 % For each of the numbers in the range find the most probable label.
 [~,labels] = max(probabilities,[],2);
+labels = uint8(labels);
 
 % Merge groups 1 & 2
 for i = 1:length(labels)
-    if labels(i) == 2, labels(i) = 1; end
+    if labels(i) == 1, labels(i) = 2; end
 end
 
 % Fix any non-contiguous label assignments buy reassigning them to their

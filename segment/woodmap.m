@@ -1,14 +1,12 @@
-function [ image ] = woodmap( image, labels )
-%WOODMAP takes an image and remaps it to 256 values according to labels
+function image = woodmap(image, labels)
+%WOODMAP takes an image and remaps it to 256 values according to labels.
+%   This method allows for lower memory usage than directly converting the
+%   entire array at once.
 
 fprintf('Mapping...\n');
-image = labels(image + 1);
-
-%result = image(:);
-%[x,y,z] = size(image);
-% parfor i = 1:length(result)
-%     result(i) = labels(result(i) + 1);
-% end
+parfor i = 1:numel(image)
+    image(i) = labels(image(i) + 1);
+end
 end
 
 %% - Creating color map and coloring pixels
