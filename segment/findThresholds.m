@@ -1,4 +1,4 @@
-function [ labels ] = findThresholds( stack, numdists, bitdepth, logfile )
+function labels = findThresholds( stack, numdists, bitdepth, logfile )
 %FINDTHRESHOLDS uses expectation maximization to cluster pixel
 % intensitities into groups.
 % 
@@ -65,12 +65,12 @@ range = 0:MAXINT;
 
 % Assign each gray to a group.
 [labels, separatedpdfs] = getlabels(range',a,s,c);
-figure, subplot(2,1,2),
-plot(range',labels'); % Plot the ranges.
-axis([0 255 1 5]);
-daspect([5 1 1]);
+figure, %subplot(2,1,2),
+% plot(range',labels'); % Plot the ranges.
+% axis([0 255 1 5]);
+% daspect([5 1 1]);
 
-subplot(2,1,1),
+%subplot(2,1,1),
 % Plot the histogram in the background.
 histogram(sample, MAXINT,'Normalization','pdf',...
                   'EdgeColor',[0.5 0.5 0.5],'FaceColor',[0.5 0.5 0.5]);
@@ -111,6 +111,7 @@ if isrow(means), disp('means is row!'); end
 if isrow(sigma), disp('sigma is row!'); end
 numdists = length(means);
 
+% TODO: Figure out a way to better sort the distributions.
 % Sort the distributions by their right edge.
 sortme = sortrows([means,sigma,means+2.*sigma],3);
 means = sortme(:,1); sigma = sortme(:,2);
@@ -130,7 +131,7 @@ labels = uint8(labels);
 
 % Merge groups 1 & 2
 for i = 1:length(labels)
-    if labels(i) == 2, labels(i) = 1; end
+    if labels(i) == 1, labels(i) = 2; end
 end
 
 % Fix any non-contiguous label assignments buy reassigning them to their

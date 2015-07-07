@@ -1,7 +1,7 @@
 % This script segments proj_74-79 which are a Douglas-fir specimen that has
 % a visible cracking that progresses in each scan.
 
-for key = 1:5
+for key = 3:5
 %% Input Parameters ------------------------------------------------------
 
 ROTATIONCW = 27;
@@ -57,7 +57,7 @@ if 0 == exist([ OUTDIR '/subset' ],'dir')
     % Redefine stackdepth just in case it was too big.
     STACKDEPTH = size(stack,3);
     fprintf(logfile, 'depth: %i\n', STACKDEPTH );
-    stack = rescale(stack, kBITDEPTH, logfile);
+    stack = uint8(rescale(stack, kBITDEPTH, logfile));
     imshow(uint8(stack(:,:,1)),'InitialMagnification','fit')
     % if(~input('Is this the slice you want? (1 Yes / 0 No)\n'))
     %     return;
@@ -88,7 +88,7 @@ if size(gcp) == 0, p = parpool(4); else p = gcp; end
 segmented = woodmap(stack, labels);
 
 % Save a copy for debugging.
-raw_segmented = uint8(segmented);
+raw_segmented = segmented;
 save([OUTDIR '/raw_segmented.mat'],'raw_segmented');
 clear raw_segmented;
 
