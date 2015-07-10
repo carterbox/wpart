@@ -20,9 +20,10 @@ function labels = findThresholds( stack, numdists, bitdepth, logfile )
 %% -----------------------------------------------------------------------
 % GLOBAL VARIABLES
 MAXITER = 500; % Maxium iterations for EM fitting of gaussians
-REPS = 5; % Number of times to attempt EM fitting of guassians
+TERMCRIT = 1e-6;
+REPS = 1; % Number of times to attempt EM fitting of guassians
 MAXINT = 2^bitdepth - 1;
-UPPERTHRESH = MAXINT*0.99;
+UPPERTHRESH = MAXINT;%*0.99;
 [~,~,z] = size(stack);
 
 fprintf('Sampling dataset... \n');
@@ -45,7 +46,7 @@ end
 %% Fit Guassians to the data ---------------------------------------------
 fprintf( logfile, '\nFinding Gaussian mix for %i peaks...\n',numdists);
 %%seed = gmdistribution([20;80;118;250],[sigma(:,:,I); sigma(:,:,I);sigma(:,:,I)]);
-options = statset('Display','final', 'MaxIter', MAXITER);
+options = statset('Display','final','MaxIter',MAXITER,'TolFun',TERMCRIT);
 gaussianmix = fitgmdist(sample, numdists,'Start','plus',...
                         'Replicates',REPS,'Options', options);
 
@@ -144,9 +145,10 @@ BUFFER = 0.5; % The distance on either side of the 3-4 boundary to insert the fi
 
 if numdists == 4
     warning('numdists is 4. An additional phase between 3 and 4 +/- %g will be created.',BUFFER);
-    % Find where the 4th and 3rd group intersect.
-    right = 1;
-    while labels(right) < 4, right = right + 1; end
+    % Find where the 4th and 3rd group intersect. We have to check from the
+    % right because checklabels still doesn't do it's job.
+    right = length(labels);
+    while labels(right-1) > 3, right = right - 1; end
 
     % Make a new pdf.
     pdf5 = (probabilities(:,4) - probabilities(:,3))./(probabilities(:,4) + probabilities(:,3));
