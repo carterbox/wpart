@@ -6,8 +6,8 @@ OUTDIR = ['/media/OCT14M/Segmentations/' samplename];
 kNUMGDISTS = 4;
 kBITDEPTH = 8;
 STACKDEPTH = 1600;
-WIDTH = 500;
-HEIGHT = 1000;
+WIDTH = 512;
+HEIGHT = 1024;
 numworkers = 6;
  
 %% Creating a Log file ---------------------------------------------------
@@ -28,12 +28,13 @@ INDIR{3} = '/media/OCT14M/Segmentations/recon_proj_77';
 INDIR{5} = '/media/OCT14M/Segmentations/recon_proj_78';
 INDIR{6} = '/media/OCT14M/Segmentations/recon_proj_79';
 
-stack(6*STACKDEPTH,HEIGHT,WIDTH) = uint8(0); %sprintf('uint%i', kBITDEPTH))
+stack(HEIGHT,WIDTH,6*STACKDEPTH) = uint8(0); %sprintf('uint%i', kBITDEPTH))
 diary on;
 for key = 1:6
 addpath(genpath(INDIR{key})); % Files need on searchpath to use.
 lo = (key-1)*STACKDEPTH + 1; hi = key*STACKDEPTH;
-stack(:,:,lo:hi) = imstackload([ INDIR{key} '/subset' ],sprintf('uint%i', kBITDEPTH));
+temp = imstackload([ INDIR{key} '/subset' ],sprintf('uint%i', kBITDEPTH));
+stack(:,:,lo:hi) = rescale(temp,8,1);
 end
 diary off;
 
