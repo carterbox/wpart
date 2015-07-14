@@ -43,7 +43,7 @@ end
 
 [~, samplename, ~] = fileparts(indir);
 OUTDIR = ['/media/OCT14M/Segmentations/' samplename];
-kNUMGDISTS = 5;
+kNUMGDISTS = 4;
 kBITDEPTH = 8;
 STACKDEPTH = 1600;
 numworkers = 6;

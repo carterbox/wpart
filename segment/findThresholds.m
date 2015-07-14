@@ -20,7 +20,7 @@ function labels = findThresholds( stack, numdists, bitdepth, logfile )
 %% -----------------------------------------------------------------------
 % GLOBAL VARIABLES
 MAXITER = 500; % Maxium iterations for EM fitting of gaussians
-TERMCRIT = 1e-6;
+TERMCRIT = 1e-7;
 REPS = 3; % Number of times to attempt EM fitting of guassians
 MAXINT = 2^bitdepth - 1;
 UPPERTHRESH = MAXINT;%*0.99;
@@ -76,6 +76,8 @@ range = 0:MAXINT;
 
 % Assign each gray to a group.
 [labels, separatedpdfs] = getlabels(range',a,s,c);
+
+% Set a new color order that matches our segmentation scheme.
 set(groot,'defaultAxesColorOrder',COLORORDER);
 figure, %subplot(2,1,2),
 % plot(range',labels'); % Plot the ranges.
@@ -89,8 +91,6 @@ histogram(sample, MAXINT,'Normalization','pdf',...
 hold on;
 % Put the gaussian mixture in black on top of that.
 plot(range, pdf(gaussianmix, range'),'LineWidth', 2.0);
-% Set a new color order that matches our segmentation scheme.
-
 % Plot each gaussian separately as well.
 plot(range, separatedpdfs, 'LineWidth', 2.0);
 axis([0 255 0 inf]);
