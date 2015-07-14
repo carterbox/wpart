@@ -18,6 +18,8 @@ numdists = length(means);
 % TODO: Figure out a way to better sort the distributions.
 % Sort the distributions by their right edge.
 sortme = sortrows([means,sigma,proportions,means+2.*sigma],4);
+sortend = sortme(end,1:3); sortme = sortrows(sortme(1:end-1,1:3),1);
+sortme = [sortme;sortend];
 means = sortme(:,1); sigma = sortme(:,2); proportions = sortme(:,3);
 clear sortme;
 

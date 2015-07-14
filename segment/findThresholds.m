@@ -29,11 +29,11 @@ UPPERTHRESH = MAXINT;%*0.99;
 COLORORDER = false;
 switch numdists
     case 3
-        COLORORDER = [0 0 0;0 1 0;0 0 1];
+        COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 1 0;0 0 1];
     case 4
-        COLORORDER = [0 0 0;0 0 0;0 1 0;0 0 1];
+        COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 1 0;0 0 1];
     case 5
-        COLORORDER = [0 0 0;0 0 0;0 1 0;1 0 0;0 0 1];
+        COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 1 0;1 0 0;0 0 1];
 end
 
 fprintf('Sampling dataset... \n');
@@ -76,6 +76,7 @@ range = 0:MAXINT;
 
 % Assign each gray to a group.
 [labels, separatedpdfs] = getlabels(range',a,s,c);
+set(groot,'defaultAxesColorOrder',COLORORDER);
 figure, %subplot(2,1,2),
 % plot(range',labels'); % Plot the ranges.
 % axis([0 255 1 5]);
@@ -85,11 +86,9 @@ figure, %subplot(2,1,2),
 % Plot the histogram in the background.
 histogram(sample, MAXINT,'Normalization','pdf',...
                   'EdgeColor',[0.5 0.5 0.5],'FaceColor',[0.5 0.5 0.5]);
-
-set(groot,'defaultAxesColorOrder',COLORORDER);
 hold on;
 % Put the gaussian mixture in black on top of that.
-plot(range, pdf(gaussianmix, range'), 'Color','k','LineWidth', 2.0);
+plot(range, pdf(gaussianmix, range'),'LineWidth', 2.0);
 % Set a new color order that matches our segmentation scheme.
 
 % Plot each gaussian separately as well.
