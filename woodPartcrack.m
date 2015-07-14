@@ -1,12 +1,12 @@
 % This script segments proj_74-79 which are a Douglas-fir specimen that has
 % a visible cracking that progresses in each scan.
 
-for key = 5
+for key = 1:6
 %% Input Parameters ------------------------------------------------------
 
 ROTATIONCW = 27;
 X_CORNER = 917;
-Y_CORNER = 1146;
+Y_CORNER = 946;
 kSTACKWIDTH = 512;
 kSTACKHEIGHT = 1024;
 
@@ -73,9 +73,9 @@ if 0 == exist([ OUTDIR '/subset' ],'dir')
     fprintf(logfile, 'depth: %i\n', STACKDEPTH );
     stack = uint8(rescale(stack, kBITDEPTH, logfile));
     imshow(uint8(stack(:,:,1)),'InitialMagnification','fit')
-    % if(~input('Is this the slice you want? (1 Yes / 0 No)\n'))
-    %     return;
-    % end
+    %if(~input('Is this the slice you want? (1 Yes / 0 No)\n'))
+    %    return;
+    %end
     disp('Saving subset ...');
     imstacksave(uint8(stack), [ OUTDIR '/subset' ], samplename );
     delete(p);
