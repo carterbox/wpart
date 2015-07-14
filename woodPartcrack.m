@@ -1,7 +1,7 @@
 % This script segments proj_74-79 which are a Douglas-fir specimen that has
 % a visible cracking that progresses in each scan.
 
-for key = 2:6
+for key = 5
 %% Input Parameters ------------------------------------------------------
 
 ROTATIONCW = 27;
@@ -43,7 +43,7 @@ end
 
 [~, samplename, ~] = fileparts(indir);
 OUTDIR = ['/media/OCT14M/Segmentations/' samplename];
-kNUMGDISTS = 4;
+kNUMGDISTS = 5;
 kBITDEPTH = 8;
 STACKDEPTH = 1600;
 numworkers = 6;

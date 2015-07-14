@@ -21,7 +21,7 @@ function labels = findThresholds( stack, numdists, bitdepth, logfile )
 % GLOBAL VARIABLES
 MAXITER = 500; % Maxium iterations for EM fitting of gaussians
 TERMCRIT = 1e-6;
-REPS = 1; % Number of times to attempt EM fitting of guassians
+REPS = 3; % Number of times to attempt EM fitting of guassians
 MAXINT = 2^bitdepth - 1;
 UPPERTHRESH = MAXINT;%*0.99;
 [~,~,z] = size(stack);
