@@ -1,87 +1,52 @@
-% This script segments proj_74-79 which are a Douglas-fir specimen that has
-% a visible cracking that progresses in each scan.
+% This script is for the segmentation of a precut and rotated group as a
+% whole.
 
-for key = 1:6
-%% Input Parameters ------------------------------------------------------
-
-ROTATIONCW = 27;
-X_CORNER = 917;
-Y_CORNER = 946;
-kSTACKWIDTH = 512;
-kSTACKHEIGHT = 1024;
-
-switch key
-    case 1
-         indir = '/media/OCT14M/Reconstructions/recon_proj_74';
-         notch = 1726;
-    case 2
-         indir = '/media/OCT14M/Reconstructions/recon_proj_75';
-         notch = 1726;
-         X_CORNER = X_CORNER + 32;
-         Y_CORNER = Y_CORNER + 45;
-    case 6
-         indir = '/media/OCT14M/Reconstructions/recon_proj_76';
-         notch = 1726;
-         X_CORNER = X_CORNER + 46;
-         Y_CORNER = Y_CORNER + 67;
-    case 3
-         indir = '/media/OCT14M/Reconstructions/recon_proj_77';
-         notch = 1726;
-         X_CORNER = X_CORNER + 105;
-         Y_CORNER = Y_CORNER + 115;
-    case 4
-         indir = '/media/OCT14M/Reconstructions/recon_proj_78';
-         notch = 1726;
-         X_CORNER = X_CORNER + 140;
-         Y_CORNER = Y_CORNER + 117;
-    case 5
-         indir = '/media/OCT14M/Reconstructions/recon_proj_79';
-         notch = 1866;
-         X_CORNER = X_CORNER + 19;
-         Y_CORNER = Y_CORNER + 260;
-end
-
-[~, samplename, ~] = fileparts(indir);
+samplename = 'pubfigure';
 OUTDIR = ['/media/OCT14M/Segmentations/' samplename];
 kNUMGDISTS = 4;
 kBITDEPTH = 8;
 STACKDEPTH = 1600;
+WIDTH = 500;
+HEIGHT = 1000;
 numworkers = 6;
  
 %% Creating a Log file ---------------------------------------------------
 
 start_time = tic;
-mkdir(OUTDIR); addpath(genpath(indir)); % Files need on searchpath to use.
+mkdir(OUTDIR);
 logfile = fopen([OUTDIR '/log.txt'],'a');
 fprintf(logfile,['\n' datestr(datetime('now'))]);
-fprintf(logfile, '\n%s\n', indir );
-fprintf(logfile, '\n');
-fprintf(logfile, 'CW Rotation: %.1f\n', ROTATIONCW );
-fprintf(logfile, 'x0: %i  y0: %i\n', X_CORNER, Y_CORNER );
-fprintf(logfile, 'width: %i  height: %i\n', kSTACKWIDTH, kSTACKHEIGHT);
-fprintf(logfile, 'notch: %i ', notch);
 
-%% Loading rotating cropping and scaling ---------------------------------
+%% Gather all the images -------------------------------------------------
+if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
 
-if 0 == exist([ OUTDIR '/subset' ],'dir')
-    if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
-    
-    stack = makeSubset(indir, ROTATIONCW, X_CORNER, Y_CORNER, kSTACKWIDTH,...
-                       kSTACKHEIGHT, STACKDEPTH, notch);
-    % Redefine stackdepth just in case it was too big.
-    STACKDEPTH = size(stack,3);
-    fprintf(logfile, 'depth: %i\n', STACKDEPTH );
-    stack = uint8(rescale(stack, kBITDEPTH, logfile));
-    imshow(uint8(stack(:,:,1)),'InitialMagnification','fit')
-    %if(~input('Is this the slice you want? (1 Yes / 0 No)\n'))
-    %    return;
-    %end
-    disp('Saving subset ...');
-    imstacksave(uint8(stack), [ OUTDIR '/subset' ], samplename );
-    delete(p);
-else
-    stack = imstackload([ OUTDIR '/subset' ],sprintf('uint%i', kBITDEPTH));
+stack(6*STACKDEPTH,HEIGHT,WIDTH) = uint8(0); %sprintf('uint%i', kBITDEPTH))
+for key = 1:6
+
+switch key
+    case 1
+         INDIR = '/media/OCT14M/Segmentations/recon_proj_74';
+    case 2
+         INDIR = '/media/OCT14M/Segmentations/recon_proj_75';
+    case 6
+         INDIR = '/media/OCT14M/Segmentations/recon_proj_76';
+    case 3
+         INDIR = '/media/OCT14M/Segmentations/recon_proj_77';
+    case 4
+         INDIR = '/media/OCT14M/Segmentations/recon_proj_78';
+    case 5
+         INDIR = '/media/OCT14M/Segmentations/recon_proj_79';
 end
+
+addpath(genpath(INDIR)); % Files need on searchpath to use.
+
+lo = (key-1)*STACKDEPTH + 1; 
+hi = key*STACKDEPTH;
+stack(:,:,lo:hi) = imstackload([ INDIR '/subset' ],sprintf('uint%i', kBITDEPTH));
+
+end
+
+delete(p);
 
 %% Finding the gaussian distribution mixture -----------------------------
 
