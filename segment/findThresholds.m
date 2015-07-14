@@ -64,7 +64,7 @@ gaussianmix = fitgmdist(sample, numdists,'Start','plus',...
 
 a = squeeze(gaussianmix.mu); %disp(a);
 s = squeeze(gaussianmix.Sigma); %disp(s);
-c = squeeze(gaussianmix.ComponentProportion); %disp(c);
+c = squeeze(gaussianmix.ComponentProportion)'; %disp(c);
 
 % Making a table in the log file.
 fprintf(logfile,'%6s %12s %18s\n','mean','sigma','amplitude');
@@ -85,17 +85,18 @@ figure, %subplot(2,1,2),
 % Plot the histogram in the background.
 histogram(sample, MAXINT,'Normalization','pdf',...
                   'EdgeColor',[0.5 0.5 0.5],'FaceColor',[0.5 0.5 0.5]);
+
+set(groot,'defaultAxesColorOrder',COLORORDER);
 hold on;
 % Put the gaussian mixture in black on top of that.
 plot(range, pdf(gaussianmix, range'), 'Color','k','LineWidth', 2.0);
 % Set a new color order that matches our segmentation scheme.
-set(groot,'defaultAxesColorOrder',COLORORDER);
+
 % Plot each gaussian separately as well.
 plot(range, separatedpdfs, 'LineWidth', 2.0);
 axis([0 255 0 inf]);
-set(groot,'defaultAxesColorOrder','remove')
 hold off;
-
+set(groot,'defaultAxesColorOrder','remove')
 end
 
 %% Auxillary Functions ---------------------------------------------------
@@ -107,78 +108,3 @@ isit = A >= x;
 n = find(isit, 1, 'first');
 A = A(1:n-1);
 end
-
-function [ labels, probabilities ] = getlabels(range,means,sigma,proportions)
-%GETLABELS assigns each of the points in RANGE according the pdfs described
-%   by MEANS, SIGMA, and PROPORTIONS.
-%
-% INPUTS
-%
-% OUTPUTS
-%   labels (uint8): a lookup table from each pixel value to a group.
-%   group = labels(pixel_value).
-%   probabilities: RxN table where R is the length of RANGE and N is the
-%   number of pdfs. Each column is the the values of one of the pdfs.
-%
-%% -----------------------------------------------------------------------
-if isrow(means), disp('means is row!'); end
-if isrow(sigma), disp('sigma is row!'); end
-numdists = length(means);
-
-% TODO: Figure out a way to better sort the distributions.
-% Sort the distributions by their right edge.
-sortme = sortrows([means,sigma,means+2.*sigma],3);
-means = sortme(:,1); sigma = sortme(:,2);
-clear sortme;
-
-% Make a table of the probabilities that each point belongs to a give mode.
-probabilities(length(range),numdists) = double(0);
-for i = 1:numdists
-    thispdf = normpdf(range, means(i), sqrt(sigma(i)));
-    %thispdf = pdf(gmdistribution(means(i),sigma(i)),range);
-    probabilities(:,i) = proportions(i).*thispdf;
-end
-
-% For each of the numbers in the range find the most probable label.
-[~,labels] = max(probabilities,[],2);
-labels = uint8(labels);
-
-% Merge groups 1 & 2
-for i = 1:length(labels)
-    if labels(i) == 1, labels(i) = 2; end
-end
-
-% Fix any non-contiguous label assignments buy reassigning them to their
-% next most probable distribution.
-[labels,~] = checklabels(labels,probabilities,0,length(labels));
-
-%% Add a fifth phase -----------------------------------------------------
-
-BUFFER = 0.5; % The distance on either side of the 3-4 boundary to insert the fifth phase.
-
-if numdists == 4
-    warning('numdists is 4. An additional phase between 3 and 4 +/- %g will be created.',BUFFER);
-    % Find where the 4th and 3rd group intersect. We have to check from the
-    % right because checklabels still doesn't do it's job.
-    right = length(labels);
-    while labels(right-1) > 3, right = right - 1; end
-
-    % Make a new pdf.
-    pdf5 = (probabilities(:,4) - probabilities(:,3))./(probabilities(:,4) + probabilities(:,3));
-
-    % Determine which grays are in the new region (left,right).
-    left = right - 1; hi = length(range);
-    while right < hi && pdf5(right) <= BUFFER
-        right = right + 1;
-    end
-    while left > 0 && pdf5(left) >= -BUFFER
-        left = left - 1;
-    end
-    
-    % Relabel the region.
-    labels(left+1:right-1) = 4;
-    labels(right:end) = 5;
-end
-end
-
-
