@@ -26,6 +26,16 @@ MAXINT = 2^bitdepth - 1;
 UPPERTHRESH = MAXINT;%*0.99;
 [~,~,z] = size(stack);
 
+COLORORDER = false;
+switch numdists
+    case 3
+        COLORORDER = [0 0 0;0 1 0;0 0 1];
+    case 4
+        COLORORDER = [0 0 0;0 0 0;0 1 0;0 0 1];
+    case 5
+        COLORORDER = [0 0 0;0 0 0;0 1 0;1 0 0;0 0 1];
+end
+
 fprintf('Sampling dataset... \n');
 % Create a histogram from a 2 percent random sample of the data to reduce
 % memory and processing consumption.
@@ -78,9 +88,12 @@ histogram(sample, MAXINT,'Normalization','pdf',...
 hold on;
 % Put the gaussian mixture in black on top of that.
 plot(range, pdf(gaussianmix, range'), 'Color','k','LineWidth', 2.0);
+% Set a new color order that matches our segmentation scheme.
+set(groot,'defaultAxesColorOrder',COLORORDER);
 % Plot each gaussian separately as well.
 plot(range, separatedpdfs, 'LineWidth', 2.0);
 axis([0 255 0 inf]);
+set(groot,'defaultAxesColorOrder','remove')
 hold off;
 
 end
