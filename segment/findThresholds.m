@@ -44,6 +44,8 @@ sample = stack(:,:,random('unid', z, [1,numsamples]));
 sample = double(sample(:));
 fprintf( logfile, '\nNUM SAMPLED SLICES IS %i \n', numsamples);
 
+clear stack;
+
 % Sometimes, due to over exposure, there is a peak at the right edge of the
 % histogram. It hinders fitgmdist in doing its job, so we remove it. 
 sample = removex(sample, UPPERTHRESH);
