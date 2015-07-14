@@ -21,10 +21,11 @@ fprintf(logfile,['\n' datestr(datetime('now'))]);
 %% Gather all the images -------------------------------------------------
 if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
 
+INDIR = cell(6,1);
 INDIR{1} = '/media/OCT14M/Segmentations/recon_proj_74';
 INDIR{2} = '/media/OCT14M/Segmentations/recon_proj_75';
 INDIR{3} = '/media/OCT14M/Segmentations/recon_proj_76';
-INDIR{3} = '/media/OCT14M/Segmentations/recon_proj_77';
+INDIR{4} = '/media/OCT14M/Segmentations/recon_proj_77';
 INDIR{5} = '/media/OCT14M/Segmentations/recon_proj_78';
 INDIR{6} = '/media/OCT14M/Segmentations/recon_proj_79';
 
