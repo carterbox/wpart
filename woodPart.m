@@ -1,60 +1,101 @@
-% This script segments proj_74-79 which are a Douglas-fir specimen that has
-% a visible cracking that progresses in each scan.
+% This script segments datasets of various sizes for each of the wood types
+%: Poplar, earlywood, and latewood.
 
-for key = 5
+for key = 1
 %% Input Parameters ------------------------------------------------------
 
-ROTATIONCW = 27;
-X_CORNER = 917;
-Y_CORNER = 1146;
-kSTACKWIDTH = 512;
-kSTACKHEIGHT = 1024;
+kSTACKWIDTH = 256;
+kSTACKHEIGHT = 256;
+STACKDEPTH = 2048;
+notch = 2048+16;
+kNUMGDISTS = 4;
 
-switch key
-    case 1
-         indir = '/media/OCT14M/Reconstructions/recon_proj_74';
-         notch = 1726;
-    case 2
-         indir = '/media/OCT14M/Reconstructions/recon_proj_75';
-         notch = 1726;
-         X_CORNER = X_CORNER + 32;
-         Y_CORNER = Y_CORNER + 45;
-    case 6
-         indir = '/media/OCT14M/Reconstructions/recon_proj_76';
-         notch = 1726;
-         X_CORNER = X_CORNER + 46;
-         Y_CORNER = Y_CORNER + 67;
-    case 3
-         indir = '/media/OCT14M/Reconstructions/recon_proj_77';
-         notch = 1726;
-         X_CORNER = X_CORNER + 105;
-         Y_CORNER = Y_CORNER + 115;
-    case 4
-         indir = '/media/OCT14M/Reconstructions/recon_proj_78';
-         notch = 1726;
-         X_CORNER = X_CORNER + 140;
-         Y_CORNER = Y_CORNER + 117;
-    case 5
-         indir = '/media/OCT14M/Reconstructions/recon_proj_79';
-         notch = 1866;
-         X_CORNER = X_CORNER + 19;
-         Y_CORNER = Y_CORNER + 260;
+if key < 4
+    % Earlywood Samples
+    INDIR = '/media/chingd/OCT14C/OCT14C/Reconstructions/recon_proj_97';
+    ROTATIONCW = 15;
+    notch = 1536+16;
+    STACKDEPTH = 1536;
+    switch key
+        case 1
+            % Bulk No Adhesive
+            samplename = 'earlywood0';
+            X_CORNER = 454;
+            Y_CORNER = 1281;
+        case 2
+            % Bulk
+            samplename = 'earlywood1';
+            X_CORNER = 927;
+            Y_CORNER = 1668;
+        case 3
+            % Bondline
+            samplename = 'earlywood2';
+            X_CORNER = 1223;
+            Y_CORNER = 1519;
+    end
+elseif key > 3 && key < 7
+    % Latewood Samples
+    INDIR = '/media/chingd/OCT14C/OCT14C/Reconstructions/recon_proj_97';
+    ROTATIONCW = -10;
+    switch key
+        case 4
+            % Bulk
+            samplename = 'latewood0';
+            X_CORNER = 793;
+            Y_CORNER = 843;
+        case 5
+            % Bulk
+            samplename = 'latewood1';
+            X_CORNER = 1295;
+            Y_CORNER = 786;
+        case 6
+            % Bondline maxdepth 1500
+            samplename = 'latewood2';
+            X_CORNER = 1570;
+            Y_CORNER = 1319;
+    end
+else
+    % Hybrid Poplar Samples
+    INDIR = '/media/chingd/OCT14C/OCT14C/Reconstructions/recon_proj_81';
+    ROTATIONCW = -7;
+    kNUMGDISTS = 5;
+    switch key
+        case 7
+            % Bulk
+            samplename = 'hybridpoplar0';
+            X_CORNER = 722;
+            Y_CORNER = 1573;
+        case 8
+            % Bulk
+            samplename = 'hybridpoplar1';
+            X_CORNER = 1202;
+            Y_CORNER = 1414;
+        case 9
+            % Bulk No Adhesive
+            samplename = 'hybridpoplar2';
+            X_CORNER = 1484;
+            Y_CORNER = 1691;
+        case 10
+            % Bondline Max Depth 1700
+            samplename = 'hybridpoplar3';
+            X_CORNER = 1439;
+            Y_CORNER = 1136;
+            notch = 1536+16;
+            STACKDEPTH = 1536;
+    end
 end
-
-[~, samplename, ~] = fileparts(indir);
-OUTDIR = ['/media/OCT14M/Segmentations/' samplename];
-kNUMGDISTS = 5;
+%[~, samplename, ~] = fileparts(INDIR);
+OUTDIR = ['/media/chingd/OCT14C/Segmentations/' samplename];
 kBITDEPTH = 8;
-STACKDEPTH = 1600;
-numworkers = 6;
+numworkers = 4;
  
 %% Creating a Log file ---------------------------------------------------
 
 start_time = tic;
-mkdir(OUTDIR); addpath(genpath(indir)); % Files need on searchpath to use.
+mkdir(OUTDIR); addpath(genpath(INDIR)); % Files need on searchpath to use.
 logfile = fopen([OUTDIR '/log.txt'],'a');
 fprintf(logfile,['\n' datestr(datetime('now'))]);
-fprintf(logfile, '\n%s\n', indir );
+fprintf(logfile, '\n%s\n', INDIR );
 fprintf(logfile, '\n');
 fprintf(logfile, 'CW Rotation: %.1f\n', ROTATIONCW );
 fprintf(logfile, 'x0: %i  y0: %i\n', X_CORNER, Y_CORNER );
@@ -66,16 +107,16 @@ fprintf(logfile, 'notch: %i ', notch);
 if 0 == exist([ OUTDIR '/subset' ],'dir')
     if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
     
-    stack = makeSubset(indir, ROTATIONCW, X_CORNER, Y_CORNER, kSTACKWIDTH,...
+    stack = makeSubset(INDIR, ROTATIONCW, X_CORNER, Y_CORNER, kSTACKWIDTH,...
                        kSTACKHEIGHT, STACKDEPTH, notch);
     % Redefine stackdepth just in case it was too big.
     STACKDEPTH = size(stack,3);
     fprintf(logfile, 'depth: %i\n', STACKDEPTH );
     stack = uint8(rescale(stack, kBITDEPTH, logfile));
     imshow(uint8(stack(:,:,1)),'InitialMagnification','fit')
-    % if(~input('Is this the slice you want? (1 Yes / 0 No)\n'))
-    %     return;
-    % end
+    if(~input('Is this the slice you want? (1 Yes / 0 No)\n'))
+        return;
+    end
     disp('Saving subset ...');
     imstacksave(uint8(stack), [ OUTDIR '/subset' ], samplename );
     delete(p);
@@ -86,9 +127,9 @@ end
 %% Finding the gaussian distribution mixture -----------------------------
 
 labels = findThresholds(stack, kNUMGDISTS, kBITDEPTH, logfile);
-% if(~input('Does this distribution look appropriate? (1 Yes / 0 No)\n'))
-%     return;
-% end
+if(~input('Does this distribution look appropriate? (1 Yes / 0 No)\n'))
+    return;
+end
 disp('Saving labels ...');
 save([OUTDIR '/labels.mat'], 'labels');
 print([OUTDIR '/mixedgaussians'], '-dpng');
@@ -107,7 +148,7 @@ save([OUTDIR '/raw_segmented.mat'],'raw_segmented');
 clear raw_segmented;
 
 segmented = removeislands(segmented, 5, 80);
-output = woodcolor('c', segmented, 5, logfile, 1, stack);
+output = woodcolor('r', segmented, 5, logfile, 1, stack);
 
 imstacksave(output,[ OUTDIR '/segmented_c' ],samplename);
 print([OUTDIR '/comparison'],'-dpng');
