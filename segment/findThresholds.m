@@ -90,9 +90,8 @@ end
 function A = removex(A,x)
 %REMOVEX removes values in A that are greater than or equal to x.
 A = sort(A);
-isit = A >= x;
-n = find(isit, 1, 'first');
-A = A(1:n-1);
+numlower = sum(A < x);
+A = A(1:numlower);
 end
 
 function [ labels, probabilities ] = getlabels(range,means,sigma,proportions)
