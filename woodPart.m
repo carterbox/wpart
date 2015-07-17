@@ -1,7 +1,7 @@
 % This script segments datasets of various sizes for each of the wood types
 %: Poplar, earlywood, and latewood.
 
-for key = 1
+for key = 2:10
 %% Input Parameters ------------------------------------------------------
 
 kSTACKWIDTH = 256;
@@ -12,7 +12,7 @@ kNUMGDISTS = 4;
 
 if key < 4
     % Earlywood Samples
-    INDIR = '/media/chingd/OCT14C/OCT14C/Reconstructions/recon_proj_97';
+    INDIR = '/media/OCT14M/Reconstructions/recon_proj_97';
     ROTATIONCW = 15;
     notch = 1536+16;
     STACKDEPTH = 1536;
@@ -35,7 +35,7 @@ if key < 4
     end
 elseif key > 3 && key < 7
     % Latewood Samples
-    INDIR = '/media/chingd/OCT14C/OCT14C/Reconstructions/recon_proj_97';
+    INDIR = '/media/OCT14M/Reconstructions/recon_proj_97';
     ROTATIONCW = -10;
     switch key
         case 4
@@ -56,7 +56,7 @@ elseif key > 3 && key < 7
     end
 else
     % Hybrid Poplar Samples
-    INDIR = '/media/chingd/OCT14C/OCT14C/Reconstructions/recon_proj_81';
+    INDIR = '/media/OCT14M/Reconstructions/recon_proj_81';
     ROTATIONCW = -7;
     kNUMGDISTS = 5;
     switch key
@@ -85,7 +85,7 @@ else
     end
 end
 %[~, samplename, ~] = fileparts(INDIR);
-OUTDIR = ['/media/chingd/OCT14C/Segmentations/' samplename];
+OUTDIR = ['/media/OCT14M/Segmentations/' samplename];
 kBITDEPTH = 8;
 numworkers = 4;
  
