@@ -114,9 +114,9 @@ if 0 == exist([ OUTDIR '/subset' ],'dir')
     fprintf(logfile, 'depth: %i\n', STACKDEPTH );
     stack = uint8(rescale(stack, kBITDEPTH, logfile));
     imshow(uint8(stack(:,:,1)),'InitialMagnification','fit')
-    if(~input('Is this the slice you want? (1 Yes / 0 No)\n'))
-        return;
-    end
+    %if(~input('Is this the slice you want? (1 Yes / 0 No)\n'))
+    %    return;
+    %end
     disp('Saving subset ...');
     imstacksave(uint8(stack), [ OUTDIR '/subset' ], samplename );
     delete(p);
@@ -127,9 +127,9 @@ end
 %% Finding the gaussian distribution mixture -----------------------------
 
 labels = findThresholds(stack, kNUMGDISTS, kBITDEPTH, logfile);
-if(~input('Does this distribution look appropriate? (1 Yes / 0 No)\n'))
-    return;
-end
+%if(~input('Does this distribution look appropriate? (1 Yes / 0 No)\n'))
+%    return;
+%end
 disp('Saving labels ...');
 save([OUTDIR '/labels.mat'], 'labels');
 print([OUTDIR '/mixedgaussians'], '-dpng');
