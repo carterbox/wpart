@@ -23,9 +23,15 @@ numparts = max(A(:));
 binarylayers = cell(numparts,1);
 
 % Convert the image into a sequency of binary arrays and remove islands.
-parfor i = 3:numparts
-    binarylayers{i} = uint8(bwareaopen(A >= i, minislandsize, CONNECTIVITY));
+for i = 3:numparts
+    
+    DA = distributed(A);
+    spmd
+    opened = uint8(bwareaopen(DA >= i, minislandsize, CONNECTIVITY));
     %figure(i),imshow(uint8(BW{i}(:,:,1)*255));
+    end
+    binarylayers{i} = gather(opened);
+    
 end
 
 % Recombine the layers.

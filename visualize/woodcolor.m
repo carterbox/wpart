@@ -3,6 +3,15 @@ function [ output ] = woodcolor( CorBW, segmented, numSegments, varargin )
 % woodcolor( CorBW, segmented, numSegments, logfile, showresult, image )
 %WOODCOLOR takes images segmented into parts 1...NUMSEGMENTS and remaps the
 %   numbers to colors or grescale values from 1...255.
+%
+% INPUTS
+%   CorBW (string): 'c' segments according to colormap
+%                   'b' segments according to greymap
+%                   '' or anything else removes the backround but leaves original grey
+%                   colors.
+% OUTPUTS
+%   output (cell or array): stack of grey or color 8 bit images.
+% ------------------------------------------------------------------------
 if isempty(varargin)
     logfile = 1;
     showresult = 0;
