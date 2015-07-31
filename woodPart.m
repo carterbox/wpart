@@ -1,82 +1,32 @@
+for iteration = 1:6
 %% ---Input Parameters
-         rotationCW = 35;
-         x0 = 932;
-         y0 = 868;
+         rotationCW = 27;
+         x0 = 936;
+         y0 = 844;
          width = 512;
          height = 1024;
+         notch = 1866;
 
-switch 10
+switch iteration
     case 1
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_61';
-         notch = 1620;
+         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_74';
     case 2
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_62';
-         notch = 1620;
+         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_75';
     case 3
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_63';
-         notch = 1630;
+         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_76';
     case 4
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_64';
-         notch = 1700;
+         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_77';
     case 5
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_65';
-         notch = 1820;
+         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_78';
     case 6
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_66';
-         notch = 1814;
-         rotationCW = -25;
-         x0 = 712;
-         y0 = 1072;
-         width = 1280;
-         height = 256;
-    case 7
-        indir = '/media/Windows/Users/chingd.FORESTRY/Google Drive/Research/MATLAB/input/EEPHDFA';
-        notch = 100;
-        rotationCW = 20;
-        %79-100 seconds 4 Modes windows
-        %59 second Linux
-    case 8
-        indir = '/media/Windows/Users/chingd.FORESTRY/Google Drive/Research/MATLAB/input/HPPHEL01';
-        notch = 100;
-        rotationCW = -8;
-        %100-119 seconds 4 Modes Windows
-    case 9
-        indir = '/media/Windows/Users/chingd.FORESTRY/Google Drive/Research/MATLAB/input/SPPHEL00';
-        notch = 200;
-        rotationCW = -62;
-        %265 177 seconds 4 Modes Windows
-    case 10
-        indir = '/media/OCT14M/Reconstructions/recon_proj_41';
-        notch = 2500;
-        rotationCW = -34;
-         x0 = 247;
-         y0 = 522;
-         width = 1973;
-         height = 885;
-    case 11
-        indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_46';
-        notch = 2500;
-        rotationCW = 45;
-         x0 = 372;
-         y0 = 906;
-         width = 1854;
-         height = 525;
-    case 12
-        indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_61';
-        notch = 2500;
-        rotationCW = 30.5;
-         x0 = 434;
-         y0 = 392;
-         width = 1544;
-         height = 1074;
+         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_79';
 end
 
 
-[~, samplename, ~] = fileparts(indir);
-outdir = ['/media/OCT14M/Segmentations/JJ/' samplename];
-numGModes = 5;
-bitdepth = 8;
-depth = 2500;
+        [~, samplename, ~] = fileparts(indir);
+        outdir = ['/media/OCT14M/Segmentations/Chad/' samplename];
+        bitdepth = 8;
+        depth = 1600;
  
 %% ---Creating a Log file
 start_time = tic;
@@ -100,21 +50,8 @@ imshow(uint8(stack(:,:,1)),'InitialMagnification','fit')
 % end
 disp('Saving subset ...');
 imstacksave(uint8(stack), [ outdir '/subset' ], samplename );
-%% ---Finding the gaussian distribution mixture
-labels = findThresholds( stack, numGModes, bitdepth, logfile );
-% if(~input('Does this distribution look appropriate? (1 Yes / 0 No)\n'))
-%     return;
-% end
-disp('Saving labels ...');
-save([outdir '/labels.mat'], 'labels');
-print([outdir '/mixedgaussians'], '-dpng');
-%% ---Segmenting and Smoothing
-segmented = woodmap(stack, labels);
-segmented = removeislands(segmented,numGModes,80);
-output = woodcolor('r',segmented, numGModes, logfile, 1, stack);
-imstacksave(output, [ outdir '/segmented' ], samplename );
-print([outdir '/comparison'], '-dpng');
 
-    fprintf(logfile, '\n');
+%% ---Clean uP
 fprintf( logfile, 'Total runtime was %.2f\n', toc(start_time) );
 fclose( logfile );
+end
