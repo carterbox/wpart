@@ -21,7 +21,8 @@ fprintf(logfile,['\n' datestr(datetime('now'))]);
 %% Gather all the images -------------------------------------------------
 if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
 
-INDIR = cell(6,1);
+NUMSTACKS = 6;
+INDIR = cell(NUMSTACKS,1);
 INDIR{1} = '/media/OCT14M/Segmentations/Chad/recon_proj_74';
 INDIR{2} = '/media/OCT14M/Segmentations/Chad/recon_proj_75';
 INDIR{3} = '/media/OCT14M/Segmentations/Chad/recon_proj_76';
@@ -29,21 +30,30 @@ INDIR{4} = '/media/OCT14M/Segmentations/Chad/recon_proj_77';
 INDIR{5} = '/media/OCT14M/Segmentations/Chad/recon_proj_78';
 INDIR{6} = '/media/OCT14M/Segmentations/Chad/recon_proj_79';
 
-stack(HEIGHT,WIDTH,6*STACKDEPTH) = uint8(0); %sprintf('uint%i', kBITDEPTH))
+stack(HEIGHT,WIDTH,STACKDEPTH,NUMSTACKS) = uint8(0); %sprintf('uint%i', kBITDEPTH))
 diary on;
-for key = 1:6
+parfor key = 1:6
 addpath(genpath(INDIR{key})); % Files need on searchpath to use.
-lo = (key-1)*STACKDEPTH + 1; hi = key*STACKDEPTH;
 temp = imstackload([ INDIR{key} '/subset' ],sprintf('uint%i', kBITDEPTH));
-stack(:,:,lo:hi) = rescale(temp,8,1);
+stack(:,:,:,key) = rescale(temp,8,1);
 end
 diary off;
 
 delete(p);
 
+
+% Sample 2 percent of the data to reduce memory and processing consumption.
+fprintf('Sampling dataset... \n');
+numsamples = ceil(0.02*STACKDEPTH);
+sample = stack(:,:,random('unid', STACKDEPTH, [1,numsamples]), :);
+fprintf( logfile, '\nNUM SAMPLED SLICES IS %i \n', numsamples);
+
+clear stack;
+sample = double(sample(:));
+
 %% Finding the gaussian distribution mixture -----------------------------
 
-labels = findThresholds(stack, kNUMGDISTS, kBITDEPTH, logfile);
+labels = findThresholds(sample, kNUMGDISTS, kBITDEPTH, logfile);
 clear stack;
 disp('Saving labels ...');
 save([OUTDIR '/labels.mat'], 'labels');

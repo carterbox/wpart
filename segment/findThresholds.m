@@ -1,4 +1,4 @@
-function labels = findThresholds( stack, numdists, bitdepth, logfile )
+function labels = findThresholds( sample, numdists, bitdepth, logfile )
 %FINDTHRESHOLDS uses expectation maximization to cluster pixel
 % intensitities into groups.
 % 
@@ -24,7 +24,7 @@ TERMCRIT = 1e-7;
 REPS = 3; % Number of times to attempt EM fitting of guassians
 MAXINT = 2^bitdepth - 1;
 UPPERTHRESH = MAXINT;%*0.99;
-[~,~,z] = size(stack);
+[~,~,z] = size(sample);
 
 COLORORDER = false;
 switch numdists
@@ -35,16 +35,6 @@ switch numdists
     case 5
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 1 0;1 0 0;0 0 1];
 end
-
-fprintf('Sampling dataset... \n');
-% Create a histogram from a 2 percent random sample of the data to reduce
-% memory and processing consumption.
-numsamples = ceil(0.02*z);
-sample = stack(:,:,random('unid', z, [1,numsamples]));
-sample = double(sample(:));
-fprintf( logfile, '\nNUM SAMPLED SLICES IS %i \n', numsamples);
-
-clear stack;
 
 % Sometimes, due to over exposure, there is a peak at the right edge of the
 % histogram. It hinders fitgmdist in doing its job, so we remove it. 
