@@ -44,7 +44,7 @@ for i = start:stop
         end
     end
 end
-fprintf('LOADED %i FILES\n', count);
+fprintf('LOADED %i NAMES\n', count);
 
 if(count ~= depth)
     warning('Matrix size does not match desired depth.');

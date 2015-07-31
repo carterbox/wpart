@@ -39,6 +39,7 @@ fprintf(logfile, 'CW Rotation: %.1f\n',rotationCW );
 fprintf(logfile, 'x0: %i  y0: %i\n', x0, y0 );
 fprintf(logfile, 'width: %i  height: %i\n', width, height);
 fprintf(logfile, 'notch: %i ', notch );
+
 %% ---Loading rotating cropping and scaling
 stack = makeSubset( indir, rotationCW, x0, y0, width, height, depth, notch );
 [~,~,depth] = size(stack);
