@@ -40,7 +40,7 @@ for key = 1:NUMSTACKS
     stack = imstackload([ INDIR{key} '/subset' ],sprintf('uint%i', kBITDEPTH));
 
     stack = stack(:,:,random('unid', STACKDEPTH, [1,numsamples]));
-    fprintf('\nNUM SAMPLED SLICES IS %i \n', numsamples);
+    fprintf('NUM SAMPLED SLICES IS %i \n\n', numsamples);
 
     sample(:,:,:,key) = stack;
 end
@@ -73,13 +73,13 @@ for key = 1:6
     
     output = woodcolor('remove', segmented, 5, logfile, 1, stack);
     imstacksave(output,sprintf('%s/nobackground_%2i',OUTDIR,key),samplename);
+    print([OUTDIR '/comparisonr' num2str(key)],'-dpng');
     
     output = woodcolor('c', segmented, 5, logfile, 1, stack);
     imstacksave(output,sprintf('%s/color%2i',OUTDIR,key),samplename);
+    print([OUTDIR '/comparisonc' num2str(key)],'-dpng');
     
 end
-
-print([OUTDIR '/comparison'],'-dpng');
 fprintf(logfile,'\n');
 fprintf(logfile,'Total runtime was %.2f\n',toc(start_time));
 
