@@ -70,16 +70,16 @@ for key = 1:NUMSTACKS
     segmented = woodmap(stack, labels);
 
     segmented = removeislands(segmented, 5, 80);
-    objcrop = segmented(1:min(512,HEIGHT),1:min(512,WIDTH),1:min(512,STACKDEPTH));
-    objname = sprintf('%s/step%2i.obj', OUTDIR, key);
+    objcrop = segmented(1:2:min(512,HEIGHT),1:2:min(512,WIDTH),1:2:min(512,STACKDEPTH));
+    objname = sprintf('%s/step%02i.obj', OUTDIR, key);
     if exist(objname, 'file') == 0, makeobj(objcrop, objname); end;
     
 %     output = woodcolor('remove', segmented, 5, logfile, 1, stack);
-%     imstacksave(output,sprintf('%s/nobackground_%2i',OUTDIR,key),samplename);
+%     imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),samplename);
 %     print([OUTDIR '/comparisonr' num2str(key)],'-dpng');
 %     
 %     output = woodcolor('c', segmented, 5, logfile, 1, stack);
-%     imstacksave(output,sprintf('%s/color%2i',OUTDIR,key),samplename);
+%     imstacksave(output,sprintf('%s/color%02i',OUTDIR,key),samplename);
 %     print([OUTDIR '/comparisonc' num2str(key)],'-dpng');
     
 end
