@@ -32,16 +32,21 @@ for i = 3:5
     end
 end
 % Write the OBJ to file.
-fid = fopen(filenamedir,'w');
+fid = fopen(filenamedir,'W');
 
-names = {'wood','interphase','adhesive'};
+names = {'air','shadow','wood','interphase','adhesive'};
 for k = 3:length(OBJ)
-    fprintf(fid,'o %s\n', names{k-2});
     if ~isempty(OBJ{k})
+        fprintf('\nSaving object: %s ...', names{k});
+        fprintf(fid,'o %s\n', names{k});
         V = OBJ{k}.vertices_point;
-        for i = 1:size(V,1)
+        disp(size(V,1));
+        tic
+        for i = 1:min(1000000,size(V,1))
             fprintf(fid,'%s %5.5f %5.5f %5.5f\n', 'v', V(i,1), V(i,2), V(i,3));
         end
+        disp(toc)
+        fprintf(' DONE.');
     end
 end
 fclose(fid);
