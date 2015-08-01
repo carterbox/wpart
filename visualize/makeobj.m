@@ -14,6 +14,8 @@ function makeobj( segmentedvol, filenamedir )
 %% -----------------------------------------------------------------------
 [x0,y0,z0] = size(segmentedvol);
 
+%% Get the Coordinates of each vertex ------------------------------------
+
 % Centering the object.
 dx = -(x0 - 1)/2 - 1;
 dy = -(y0 - 1)/2 - 1;
@@ -21,33 +23,40 @@ dz = -(z0 - 1)/2 - 1;
 scale = max([x0;y0;z0]);
 
 OBJ = cell(5,1);
-for i = 3:5
-    binaryvol = segmentedvol == i;
+for phase = 3:5
+    binaryvol = segmentedvol == phase;
     num_vertices = sum(binaryvol(:));
     if num_vertices > 0
-        % Get the cartesian coordinates of all 'true' in binaryvol.
+        % Get the cartesian coordinates of all pixels in this phase.
         [x,y,z] = ind2sub([x0,y0,z0],find(binaryvol));
         
-        OBJ{i}.vertices_point = cat(2,x+dx,y+dy,z+dz)./scale;
+        OBJ{phase}.vertices_point = cat(2,x+dx,y+dy,z+dz)./scale;
     end
 end
-% Write the OBJ to file.
-fid = fopen(filenamedir,'W');
 
+%% Write the OBJ to file -------------------------------------------------
+fid = fopen(filenamedir,'w');
 names = {'air','shadow','wood','interphase','adhesive'};
-for k = 3:length(OBJ)
-    if ~isempty(OBJ{k})
-        fprintf('\nSaving object: %s ...', names{k});
-        fprintf(fid,'o %s\n', names{k});
-        V = OBJ{k}.vertices_point;
-        disp(size(V,1));
+
+for phase = 1:length(OBJ)
+if ~isempty(OBJ{phase})
+    
+        V = OBJ{phase}.vertices_point'; disp(size(V,1));
+        fprintf('\nSaving object: %s ...', names{phase});
+        
+        % Generate a string
         tic
-        for i = 1:min(1000000,size(V,1))
-            fprintf(fid,'%s %5.5f %5.5f %5.5f\n', 'v', V(i,1), V(i,2), V(i,3));
-        end
+        assert(size(V,1) == 3);
+        string0 = sprintf('o %s\n', names{phase});
+        string1 = sprintf('v %5.5f %5.5f %5.5f\n', V);
+        
+        % Save string to file all at once.
+        fprintf(fid,'%s',string0);
+        fprintf(fid,'%s',string1);
         disp(toc)
         fprintf(' DONE.');
-    end
+        
+end
 end
 fclose(fid);
 end
