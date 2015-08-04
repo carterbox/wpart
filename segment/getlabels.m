@@ -15,14 +15,6 @@ if isrow(means), disp('means is row!'); end
 if isrow(sigma), disp('sigma is row!'); end
 numdists = length(means);
 
-% TODO: Figure out a way to better sort the distributions.
-% Sort the distributions by their right edge.
-sortme = sortrows([means,sigma,proportions,means+2.*sigma],4);
-sortend = sortme(end,1:3); sortme = sortrows(sortme(1:end-1,1:3),1);
-sortme = [sortme;sortend];
-means = sortme(:,1); sigma = sortme(:,2); proportions = sortme(:,3);
-clear sortme;
-
 % Make a table of the probabilities that each point belongs to a give mode.
 probabilities(length(range),numdists) = double(0);
 for i = 1:numdists
@@ -34,6 +26,25 @@ end
 % For each of the numbers in the range find the most probable label.
 [~,labels] = max(probabilities,[],2);
 labels = uint8(labels);
+
+% TODO: Figure out a way to better sort the distributions.  
+% Finds the center of each group in the vector LABEL.
+centroids(numdists,2) = double(0);
+centroids(:,2) = (1:numdists)';
+for j = 1:numdists
+    points = find(labels == j);
+    centroids(j,1) = mean(points);
+end
+
+% Sort the distributions by the centroid of their most probable region.
+probabilities = sortrows([centroids(:,1),probabilities'], 1);
+probabilities = probabilities(:,2:end)';
+
+centroids = sortrows(centroids,1);
+centroids(:,1) = (1:numdists)';
+centroids = sortrows(centroids,2);
+sorter = centroids(:,1);
+labels = sorter(labels);
 
 % Merge groups 1 & 2
 for i = 1:length(labels)
@@ -72,5 +83,4 @@ if numdists == 4
     labels(right:end) = 5;
 end
 end
-
 

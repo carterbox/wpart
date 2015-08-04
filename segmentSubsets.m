@@ -58,7 +58,7 @@ print([OUTDIR '/mixedgaussians'], '-dpng');
 %% Segmenting and Smoothing ----------------------------------------------
 if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
 
-for key = 1:6
+for key = 1:NUMSTACKS
     % Load each of the stacks to process them separately
     stack = imstackload([INDIR{key} '/subset'],...
                         sprintf('uint%i', kBITDEPTH));
