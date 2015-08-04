@@ -3,7 +3,7 @@ function labels = findThresholds( sample, numdists, bitdepth, logfile )
 % intensitities into groups.
 % 
 % INPUTS
-%   stack (double): a nonempty stack of grayscale images
+%   sample (double): a nonempty stack of grayscale images
 %   numdists: the expected number of fittable distributions in the
 %   histogram of the stack
 %   bitdepth: the bitdepth of the images in the stack
@@ -24,7 +24,7 @@ TERMCRIT = 1e-7;
 REPS = 3; % Number of times to attempt EM fitting of guassians
 MAXINT = 2^bitdepth - 1;
 UPPERTHRESH = MAXINT;%*0.99;
-[~,~,z] = size(sample);
+sample = double(sample(:));
 
 COLORORDER = false;
 switch numdists
@@ -73,7 +73,7 @@ range = 0:MAXINT;
 set(groot,'defaultAxesColorOrder',COLORORDER);
 figure, %subplot(2,1,2),
 % plot(range',labels'); % Plot the ranges.
-% axis([0 255 1 5]);
+% axis([0 MAXINT 1 5]);
 % daspect([5 1 1]);
 
 %subplot(2,1,1),
@@ -85,7 +85,7 @@ hold on;
 plot(range, pdf(gaussianmix, range'),'LineWidth', 2.0);
 % Plot each gaussian separately as well.
 plot(range, separatedpdfs, 'LineWidth', 2.0);
-axis([0 255 0 inf]);
+axis([0 MAXINT 0 inf]);
 hold off;
 set(groot,'defaultAxesColorOrder','remove')
 end
