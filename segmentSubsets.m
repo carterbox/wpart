@@ -48,7 +48,7 @@ sample = double(sample(:));
 
 diary off;
 %% Finding the gaussian distribution mixture -----------------------------
-
+sample = sample(rescale(sample, kBITDEPTH, logfile));
 labels = findThresholds(sample, kNUMGDISTS, kBITDEPTH, logfile);
 clear sample;
 disp('Saving labels ...');
