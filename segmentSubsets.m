@@ -3,7 +3,7 @@
 
 samplename = 'SPPHEL00';
 OUTDIR = ['/media/OCT14M/Segmentations/lookbook/' samplename];
-kNUMGDISTS = 4;
+kNUMGDISTS = 6;
 kBITDEPTH = 8;
 STACKDEPTH = 1600;
 WIDTH = 512;
@@ -20,11 +20,6 @@ fprintf(logfile,['\n' datestr(datetime('now'))]);
 %% Gather all the images -------------------------------------------------
 
 INDIR = {...
-'/media/OCT14M/Segmentations/Chad/recon_proj_74';...
-'/media/OCT14M/Segmentations/Chad/recon_proj_75';...
-'/media/OCT14M/Segmentations/Chad/recon_proj_76';...
-'/media/OCT14M/Segmentations/Chad/recon_proj_77';...
-'/media/OCT14M/Segmentations/Chad/recon_proj_78';...
 '/media/OCT14M/Segmentations/Chad/recon_proj_79'};
 NUMSTACKS = length(INDIR);
 
@@ -32,7 +27,7 @@ NUMSTACKS = length(INDIR);
 diary([OUTDIR '/log.txt']);
 
 % Sample 2 percent of the data to reduce memory and processing consumption.
-numsamples = ceil(0.02*STACKDEPTH);
+numsamples = ceil(0.01*STACKDEPTH);
 sample(HEIGHT,WIDTH,numsamples,NUMSTACKS) = uint8(0); 
 
 for key = 1:NUMSTACKS
@@ -74,13 +69,13 @@ for key = 1:NUMSTACKS
     objname = sprintf('%s/step%02i.obj', OUTDIR, key);
     if exist(objname, 'file') == 0, makeobj(objcrop, objname); end;
     
-%     output = woodcolor('remove', segmented, 5, logfile, 1, stack);
-%     imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),samplename);
-%     print([OUTDIR '/comparisonr' num2str(key)],'-dpng');
-%     
-%     output = woodcolor('c', segmented, 5, logfile, 1, stack);
-%     imstacksave(output,sprintf('%s/color%02i',OUTDIR,key),samplename);
-%     print([OUTDIR '/comparisonc' num2str(key)],'-dpng');
+    output = woodcolor('remove', segmented, 5, logfile, 1, stack);
+    imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),samplename);
+    print([OUTDIR '/comparisonr' num2str(key)],'-dpng');
+    
+    output = woodcolor('c', segmented, 5, logfile, 1, stack);
+    imstacksave(output,sprintf('%s/color%02i',OUTDIR,key),samplename);
+    print([OUTDIR '/comparisonc' num2str(key)],'-dpng');
     
 end
 fprintf(logfile,'\n');

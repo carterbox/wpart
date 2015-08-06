@@ -34,6 +34,8 @@ switch numdists
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 1 0;0 0 1];
     case 5
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 1 0;1 0 0;0 0 1];
+    case 6
+        COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 0 0;0 1 0;1 0 0;0 0 1];
 end
 
 % Sometimes, due to over exposure, there is a peak at the right edge of the
