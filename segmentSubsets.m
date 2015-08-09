@@ -15,7 +15,7 @@ numworkers = 6; % Choose between 4 and 6
 start_time = tic;
 mkdir(OUTDIR);
 logfile = fopen([OUTDIR '/log.txt'],'a');
-fprintf(logfile,['\n' datestr(datetime('now'))]);
+fprintf(logfile,['\n' datestr(datetime('now')) '\n\n']);
 
 %% Gather all the images -------------------------------------------------
 
