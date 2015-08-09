@@ -42,11 +42,12 @@ output = cell(z,1);
                 0,1,0
                 0,0,1];
         end
-        fprintf(logfile, '\n#Colormap\n');
-        for i = 1:numSegments
-            fprintf(logfile, '%i %i %i\n', cmap(i,:));
+        
+        fprintf(logfile, '\n#Colormap');
+        fprintf(logfile, '\n#R G B');
+        for r = 1:size(cmap,1)
+            fprintf(logfile, '\n %i %i %i', cmap(r,:));
         end
-        fprintf(logfile, '\n');
         
         parfor i = 1:z
            output{i} = label2rgb(segmented(:,:,i),cmap);
@@ -57,9 +58,8 @@ output = cell(z,1);
         cmap(1:2) = 0;
         cmap = uint8(cmap);
         
-        fprintf(logfile, '\n#Colormap\n');
-        fprintf(logfile, '%i \n', cmap);
-        fprintf(logfile, '\n');
+        fprintf(logfile, '\n#Graymap');
+        fprintf(logfile, '\n %i', cmap);
         
         parfor i = 1:z
             output{i} = cmap(segmented(:,:,i));

@@ -40,13 +40,13 @@ end
 % histogram. It hinders fitgmdist in doing its job, so we remove it. 
 sample = removex(sample, UPPERTHRESH);
 fprintf( logfile, 'REMOVED DATA ABOVE %.1f \n', UPPERTHRESH);
-fprintf( logfile, 'LENGTH IS %i \n', length(sample));
+fprintf( logfile, 'NUMBER OF POINTS IS %i \n', length(sample));
 if(length(sample) < 10000)
     error('Data sample has no length. Maybe the threshold is too high.');
 end
 
 %% Fit Guassians to the data ---------------------------------------------
-fprintf( logfile, '\nFinding Gaussian mix for %i peaks...\n',numdists);
+fprintf( logfile, '\nGaussian mixture for %i peaks:\n',numdists);
 %%seed = gmdistribution([20;80;118;250],[sigma(:,:,I); sigma(:,:,I);sigma(:,:,I)]);
 options = statset('Display','final','MaxIter',MAXITER,'TolFun',TERMCRIT);
 gaussianmix = fitgmdist(sample, numdists,'Start','plus',...
@@ -59,7 +59,7 @@ s = squeeze(gaussianmix.Sigma); %disp(s);
 c = squeeze(gaussianmix.ComponentProportion)'; %disp(c);
 
 % Making a table in the log file.
-fprintf(logfile,'%6s %12s %18s\n','mean','sigma','amplitude');
+fprintf(logfile,'%6s %12s %15s\n','mean','sigma','amplitude');
 for i = 1:numdists
     fprintf(logfile,'%6.2f %12.2f %15.5f\n',a(i),s(i),c(i));
 end
@@ -68,6 +68,10 @@ range = 0:MAXINT;
 
 % Assign each gray to a group.
 [labels, separatedpdfs] = getlabels(range',a,s,c);
+
+% Save labels to logfile
+fprintf(logfile, '\r\n greys group assignments: \r\n');
+fprintf(logfile, '%i %i %i %i %i %i %i %i | %i %i %i %i %i %i %i %i \r\n', labels);
 
 % Set a new color order that matches our segmentation scheme.
 set(groot,'defaultAxesColorOrder',COLORORDER);
