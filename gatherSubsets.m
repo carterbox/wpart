@@ -5,7 +5,7 @@ for iteration = 1:6
          y0 = 844;
          width = 512;
          height = 1024;
-         notch = 1866;
+         notch = 1866; % Location of bottom slice
 
 switch iteration
     case 1

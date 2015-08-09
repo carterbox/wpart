@@ -3,12 +3,12 @@
 
 samplename = 'SPPHEL00';
 OUTDIR = ['/media/OCT14M/Segmentations/lookbook/' samplename];
-kNUMGDISTS = 4;
+kNUMGDISTS = 4; % The number of distributions to fit (4 or 5)
 kBITDEPTH = 8;
 STACKDEPTH = 1600;
 WIDTH = 512;
 HEIGHT = 1024;
-numworkers = 6;
+numworkers = 6; % Choose between 4 and 6
  
 %% Creating a Log file ---------------------------------------------------
 
@@ -69,18 +69,18 @@ for key = 1:NUMSTACKS
     %segmented = labels(stack + 1);
     segmented = woodmap(stack, labels);
 
-    segmented = removeislands(segmented, 5, 80);
-    objcrop = segmented(1:2:min(512,HEIGHT),1:2:min(512,WIDTH),1:2:min(512,STACKDEPTH));
-    objname = sprintf('%s/step%02i.obj', OUTDIR, key);
-    if exist(objname, 'file') == 0, makeobj(objcrop, objname); end;
+    segmented = removeislands(segmented, 0, 80);
+%     objcrop = segmented(1:2:min(512,HEIGHT),1:2:min(512,WIDTH),1:2:min(512,STACKDEPTH));
+%     objname = sprintf('%s/step%02i.obj', OUTDIR, key);
+%     if exist(objname, 'file') == 0, makeobj(objcrop, objname); end;
     
-%     output = woodcolor('remove', segmented, 5, logfile, 1, stack);
-%     imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),samplename);
-%     print([OUTDIR '/comparisonr' num2str(key)],'-dpng');
-%     
-%     output = woodcolor('c', segmented, 5, logfile, 1, stack);
-%     imstacksave(output,sprintf('%s/color%02i',OUTDIR,key),samplename);
-%     print([OUTDIR '/comparisonc' num2str(key)],'-dpng');
+    output = woodcolor('remove', segmented, 5, logfile, 1, stack);
+    imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),samplename);
+    print([OUTDIR '/comparisonr' num2str(key)],'-dpng');
+    
+    output = woodcolor('c', segmented, 5, logfile, 1, stack);
+    imstacksave(output,sprintf('%s/color%02i',OUTDIR,key),samplename);
+    print([OUTDIR '/comparisonc' num2str(key)],'-dpng');
     
 end
 fprintf(logfile,'\n');
