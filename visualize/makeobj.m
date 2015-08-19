@@ -27,6 +27,10 @@ for phase = 3:5
     binaryvol = segmentedvol == phase;
     num_vertices = sum(binaryvol(:));
     if num_vertices > 0
+        disp(num_vertices);
+        binaryvol = filterinnards(binaryvol, 9);
+        disp(sum(binaryvol(:)));
+        
         % Get the cartesian coordinates of all pixels in this phase.
         [x,y,z] = ind2sub([x0,y0,z0],find(binaryvol));
         
@@ -46,7 +50,7 @@ if ~isempty(OBJ{phase})
         
         % Generate a string
         tic
-        assert(size(V,1) == 3);
+        %assert(size(V,1) == 3);
         string0 = sprintf('o %s\n', names{phase});
         string1 = sprintf('v %5.5f %5.5f %5.5f\n', V);
         
@@ -61,3 +65,15 @@ end
 fclose(fid);
 end
 
+function vol = filterinnards(vol, thresh)
+
+%% Filter out innards
+
+%h1 = [0,0,0, 0,1,0, 0,0,0, 0,1,0, 1,1,1, 0,1,0, 0,0,0, 0,1,0, 0,0,0];
+h = ones(3,3,3);
+
+vol1 = imfilter(double(vol),h);
+
+vol = vol & (vol1 <= thresh);
+
+end
