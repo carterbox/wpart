@@ -4,7 +4,7 @@ for iteration = 1:6
          x0 = 936;
          y0 = 844;
          width = 512;
-         height = 1024;
+         height = 512;
          notch = 1866; % Location of bottom slice
 
 switch iteration
@@ -26,7 +26,7 @@ end
         [~, samplename, ~] = fileparts(indir);
         outdir = ['/media/OCT14M/Segmentations/Chad/' samplename];
         bitdepth = 8;
-        depth = 1600;
+        depth = 800;
  
 %% ---Creating a Log file
 start_time = tic;
