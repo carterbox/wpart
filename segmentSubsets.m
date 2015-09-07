@@ -1,11 +1,11 @@
 % This script is for the segmentation of a precut and rotated group as a
 % whole.
 
-samplename = 'SPPHEL00';
+samplename = 'LLPHDFC';
 OUTDIR = ['/media/OCT14M/Segmentations/lookbook/' samplename];
 kNUMGDISTS = 4; % The number of distributions to fit (4 or 5)
 kBITDEPTH = 8;
-STACKDEPTH = 1600;
+STACKDEPTH = 800;
 WIDTH = 512;
 HEIGHT = 1024;
 numworkers = 6; % Choose between 4 and 6
@@ -19,7 +19,7 @@ fprintf(logfile,['\n' datestr(datetime('now')) '\n\n']);
 
 %% Gather all the images -------------------------------------------------
 
-for proj_number = 36:40
+for proj_number = 60:65
     INDIR{end+1} = ['/media/OCT14M/Segmentations/Chad/recon_proj_' num2str(proj_number)];
 end
 NUMSTACKS = length(INDIR);

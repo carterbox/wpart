@@ -1,15 +1,15 @@
 
 %% ---Input Parameters
-rotationCW = 27;
-x0 = 936;
-y0 = 844;
+rotationCW = 30;
+x0 = 1023;
+y0 = 1131;
 width = 512;
 height = 512;
-notch = 1866; % Location of bottom slice
+notch = 1500; % Location of bottom slice
 bitdepth = 8;
 depth = 800;
 
-for proj_number = 36:40
+for proj_number = 60:65
 
 indir = ['/media/OCT14B/OCT14B/Reconstructions/recon_proj_' num2str(proj_number)];
 [~, samplename, ~] = fileparts(indir);
