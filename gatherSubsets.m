@@ -1,32 +1,19 @@
-for iteration = 1:6
+
 %% ---Input Parameters
-         rotationCW = 27;
-         x0 = 936;
-         y0 = 844;
-         width = 512;
-         height = 512;
-         notch = 1866; % Location of bottom slice
+rotationCW = 27;
+x0 = 936;
+y0 = 844;
+width = 512;
+height = 512;
+notch = 1866; % Location of bottom slice
+bitdepth = 8;
+depth = 800;
 
-switch iteration
-    case 1
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_74';
-    case 2
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_75';
-    case 3
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_76';
-    case 4
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_77';
-    case 5
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_78';
-    case 6
-         indir = '/media/OCT14B/OCT14B/Reconstructions/recon_proj_79';
-end
+for proj_number = 36:40
 
-
-        [~, samplename, ~] = fileparts(indir);
-        outdir = ['/media/OCT14M/Segmentations/Chad/' samplename];
-        bitdepth = 8;
-        depth = 800;
+indir = ['/media/OCT14B/OCT14B/Reconstructions/recon_proj_' num2str(proj_number)];
+[~, samplename, ~] = fileparts(indir);
+outdir = ['/media/OCT14M/Segmentations/Chad/' samplename];
  
 %% ---Creating a Log file
 start_time = tic;
