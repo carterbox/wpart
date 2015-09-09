@@ -7,7 +7,7 @@ kNUMGDISTS = 4; % The number of distributions to fit (4 or 5)
 kBITDEPTH = 8;
 STACKDEPTH = 800;
 WIDTH = 512;
-HEIGHT = 1024;
+HEIGHT = 512;
 numworkers = 6; % Choose between 4 and 6
  
 %% Creating a Log file ---------------------------------------------------
@@ -18,7 +18,7 @@ logfile = fopen([OUTDIR '/log.txt'],'a');
 fprintf(logfile,['\n' datestr(datetime('now')) '\n\n']);
 
 %% Gather all the images -------------------------------------------------
-
+INDIR = {};
 for proj_number = 60:65
     INDIR{end+1} = ['/media/OCT14M/Segmentations/Chad/recon_proj_' num2str(proj_number)];
 end

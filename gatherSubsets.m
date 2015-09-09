@@ -9,6 +9,8 @@ notch = 1500; % Location of bottom slice
 bitdepth = 8;
 depth = 800;
 
+parpool(4);
+
 for proj_number = 60:65
 
 indir = ['/media/OCT14B/OCT14B/Reconstructions/recon_proj_' num2str(proj_number)];
