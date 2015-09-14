@@ -1,21 +1,27 @@
 
 %% ---Input Parameters
-rotationCW = 30;
-x0 = 1023;
-y0 = 1131;
+rotationCWs = [-47 -47 -55 -55];
+x0s = [506 528 1317 867];
+y0s = [204 1305 987 315];
 width = 512;
 height = 512;
-notch = 1500; % Location of bottom slice
+notch = 2014; % Location of bottom slice
 bitdepth = 8;
-depth = 800;
+depth = 1900;
 
-parpool(4);
+for i = 2:4
+for proj_number = 290:291
 
-for proj_number = 60:65
+rotationCW = rotationCWs(i);
+x0 = x0s(i);
+y0 = y0s(i);
+    
+indir = ['/home/chingd/OCT14C/sam13_D1228RH1_10x_dimax_110mm_20DegPerSec_180Deg_5msecExpTime_1500proj_Rolling_100umLuAG_1mmC_2mmGlass_pink_2.657mrad_BHutch/recon_proj_' num2str(proj_number)];
+%[~, samplename, ~] = fileparts(indir);
 
-indir = ['/media/OCT14B/OCT14B/Reconstructions/recon_proj_' num2str(proj_number)];
-[~, samplename, ~] = fileparts(indir);
-outdir = ['/media/OCT14M/Segmentations/Chad/' samplename];
+samplename = sprintf('sam%i_%i', proj_number,i-1);
+
+outdir = ['/home/chingd/OCT14M/Jakes/' samplename];
  
 %% ---Creating a Log file
 start_time = tic;
@@ -44,4 +50,5 @@ imstacksave(uint8(stack), [ outdir '/subset' ], samplename );
 %% ---Clean uP
 fprintf( logfile, 'Total runtime was %.2f\n', toc(start_time) );
 fclose( logfile );
+end
 end
