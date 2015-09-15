@@ -38,7 +38,7 @@ end
 
 % Sometimes, due to over exposure, there is a peak at the right edge of the
 % histogram. It hinders fitgmdist in doing its job, so we remove it. 
-sample = removex(sample, UPPERTHRESH);
+sample = removex(sample, UPPERTHRESH, 0);
 fprintf( logfile, 'REMOVED DATA ABOVE %.1f \n', UPPERTHRESH);
 fprintf( logfile, 'NUMBER OF POINTS IS %i \n', length(sample));
 if(length(sample) < 10000)
@@ -96,9 +96,12 @@ end
 
 %% Auxillary Functions ---------------------------------------------------
 
-function A = removex(A,x)
-%REMOVEX removes values in A that are greater than or equal to x.
+function A = removex(A,hi,lo)
+%REMOVEX removes values in A that are outside the range (lo,hi).
+if(nargin) < 3, lo = -1; end
+
 A = sort(A);
-numlower = sum(A < x);
-A = A(1:numlower);
+right = sum(A < hi);
+left = find(A > lo,1);
+A = A(left:right);
 end
