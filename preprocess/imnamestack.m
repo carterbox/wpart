@@ -12,7 +12,7 @@ function [namestack, count] = imnamestack(directory, notch, depth)
 %
 % GLOBAL VARIABLES
 
-kEXTENSION = '.tif'; % The filetype to be loaded.
+kEXTENSION = {'.tif', '.png', '.tiff'}; % The filetype to be loaded.
 
 %% -----------------------------------------------------------------------
 % Get the details of all the files in DIRECTORY.
@@ -38,7 +38,7 @@ for i = start:stop
     if(~fcontents(i).isdir)
         [~,~,ext] = fileparts(fcontents(i).name);
         % Check for the desired filetype.
-        if strcmp(ext, kEXTENSION)
+        if strcmp(ext, kEXTENSION{1}) || strcmp(ext, kEXTENSION{2}) || strcmp(ext, kEXTENSION{3})
             count = count + 1;
             namestack{count} = fcontents(i).name;
         end
