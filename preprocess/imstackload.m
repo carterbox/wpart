@@ -24,7 +24,9 @@ for i = 1:numel(fcontents)
     end
 end
 
-if image_count == 0, return; end
+if image_count == 0
+    error('No images found!');
+end
 clear fcontents;
 
 %determines the size of the images that will be loaded
@@ -36,8 +38,11 @@ if o == 1 % the images are not color
 
     %loads all the files into the matrix
     for i = 1:image_count
-        stack(:,:,image_count) = imread(namestack{i});
+        stack(:,:,i) = imread(namestack{i});
     end
+    
+    fprintf('LOADED %i FILES\n', image_count);
+    
 else % the images are color and need a cell
     stack = cell(image_count,1);
     
@@ -45,8 +50,8 @@ else % the images are color and need a cell
     for i = 1:image_count;
             stack{i} = imread(namestack{i});
     end
+    
+    fprintf('LOADED %i FILES\n', image_count);
     warning('Color images detected. Returning a cell.');
 end
-fprintf('LOADED %i FILES\n', image_count);
-
 end
