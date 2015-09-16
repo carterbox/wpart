@@ -23,14 +23,14 @@ numparts = max(A(:));
 binarylayers = cell(numparts,1);
 
 % Convert the image into a sequency of binary arrays and remove islands.
-parfor i = 3:numparts
+parfor i = 2:numparts
     binarylayers{i} = uint8(bwareaopen(A >= i, minislandsize, CONNECTIVITY));
-    %figure(i),imshow(uint8(BW{i}(:,:,1)*255));
+    %figure(i),imshow(uint8(binarylayers{i}(:,:,1)*255));
 end
 
 % Recombine the layers.
-B = ones(size(A),'uint8') + 1; % The bottom two layers are both background.
-for i = 3:numparts;
+B = ones(size(A),'uint8');
+for i = 2:numparts;
     B = B + binarylayers{i};
 end
 end

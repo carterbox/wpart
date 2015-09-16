@@ -3,15 +3,15 @@ function labels = findThresholds( sample, numdists, bitdepth, logfile )
 % intensitities into groups.
 % 
 % INPUTS
-%   sample (double): a nonempty stack of grayscale images
+%   sample: a nonempty stack of grayscale images
 %   numdists: the expected number of fittable distributions in the
 %   histogram of the stack
-%   bitdepth: the bitdepth of the images in the stack
+%   bitdepth (double): the bitdepth of the images in the stack
 %
 % OUTPUTS
-%   labels (uint8): a lookup table from each pixel value a group.
-%   group = labels(pixel_value). If NUMDISTS = 4, then an additional group
-%   will be added to boost that number to 5.
+%   labels (uint8): a lookup table from each pixel value a group. There
+%   should probably be less than 256 groups.
+%   group = labels(pixel_value). If NUMDISTS = 4 -> 5, NUMDISTS = 2 -> 3
 %
 % NOTES
 % http://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm
@@ -23,11 +23,14 @@ MAXITER = 500; % Maxium iterations for EM fitting of gaussians
 TERMCRIT = 1e-7;
 REPS = 3; % Number of times to attempt EM fitting of guassians
 MAXINT = 2^bitdepth - 1;
-UPPERTHRESH = MAXINT;%*0.99;
+UPPERTHRESH = MAXINT;
+LOWERTHRESH = 0;
 sample = double(sample(:));
 
 COLORORDER = false;
 switch numdists
+    case 2
+        COLORORDER = [0 0 0;0.2 0.2 0.2;0 1 0;0 0 1];
     case 3
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 1 0;0 0 1];
     case 4
@@ -36,9 +39,9 @@ switch numdists
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 1 0;1 0 0;0 0 1];
 end
 
-% Sometimes, due to over exposure, there is a peak at the right edge of the
-% histogram. It hinders fitgmdist in doing its job, so we remove it. 
-sample = removex(sample, UPPERTHRESH, 0);
+% Peaks at the edges of the space hinder fitgmdist in doing its job, so 
+% we remove them. 
+sample = removex(sample, UPPERTHRESH, LOWERTHRESH);
 fprintf( logfile, 'REMOVED DATA ABOVE %.1f \n', UPPERTHRESH);
 fprintf( logfile, 'NUMBER OF POINTS IS %i \n', length(sample));
 if(length(sample) < 10000)
@@ -46,8 +49,8 @@ if(length(sample) < 10000)
 end
 
 %% Fit Guassians to the data ---------------------------------------------
-fprintf( logfile, '\nGaussian mixture for %i peaks:\n',numdists);
-%%seed = gmdistribution([20;80;118;250],[sigma(:,:,I); sigma(:,:,I);sigma(:,:,I)]);
+
+fprintf( logfile,'\nGaussian mixture for %i peaks:\n',numdists);
 options = statset('Display','final','MaxIter',MAXITER,'TolFun',TERMCRIT);
 gaussianmix = fitgmdist(sample, numdists,'Start','plus',...
                         'Replicates',REPS,'Options', options);
@@ -64,26 +67,22 @@ for i = 1:numdists
     fprintf(logfile,'%6.2f %12.2f %15.5f\n',a(i),s(i),c(i));
 end
 
-range = 0:MAXINT;
-
 % Assign each gray to a group.
+range = 0:MAXINT;
 [labels, separatedpdfs] = getlabels(range',a,s,c);
 
 % Save labels to logfile
+if MAXINT < 256
 fprintf(logfile, '\r\n greys group assignments: \r\n');
 fprintf(logfile, '%i %i %i %i %i %i %i %i | %i %i %i %i %i %i %i %i \r\n', labels);
+end
 
 % Set a new color order that matches our segmentation scheme.
 set(groot,'defaultAxesColorOrder',COLORORDER);
-figure, %subplot(2,1,2),
-% plot(range',labels'); % Plot the ranges.
-% axis([0 MAXINT 1 5]);
-% daspect([5 1 1]);
-
-%subplot(2,1,1),
+figure,
 % Plot the histogram in the background.
 histogram(sample, MAXINT,'Normalization','pdf',...
-                  'EdgeColor',[0.5 0.5 0.5],'FaceColor',[0.5 0.5 0.5]);
+          'EdgeColor',[0.5 0.5 0.5],'FaceColor',[0.5 0.5 0.5]);
 hold on;
 % Put the gaussian mixture in black on top of that.
 plot(range, pdf(gaussianmix, range'),'LineWidth', 2.0);
@@ -91,6 +90,7 @@ plot(range, pdf(gaussianmix, range'),'LineWidth', 2.0);
 plot(range, separatedpdfs, 'LineWidth', 2.0);
 axis([0 MAXINT 0 inf]);
 hold off;
+
 set(groot,'defaultAxesColorOrder','remove')
 end
 

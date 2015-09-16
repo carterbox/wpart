@@ -26,51 +26,58 @@ end
 cmap = ones( 6,1 );
 output = cell(z,1);
 
-    if strcmp(CorBW, 'c')
-        disp('You chose color');
-        if numSegments == 5
-            cmap = [
-                0,0,0
-                0,0,0
-                0,1,0
-                1,0,0
-                0,0,1];
-        else
-            cmap = [
-                0,0,0
-                0,0,0
-                0,1,0
-                0,0,1];
-        end
-        
-        fprintf(logfile, '\n#Colormap');
-        fprintf(logfile, '\n#R G B');
-        for r = 1:size(cmap,1)
-            fprintf(logfile, '\n %i %i %i', cmap(r,:));
-        end
-        
-        parfor i = 1:z
-           output{i} = label2rgb(segmented(:,:,i),cmap);
-        end
-    elseif strcmp(CorBW, 'b')
-        disp('You chose black and white');
-        cmap = floor([0:numSegments-1]*255/(numSegments-1));
-        cmap(1:2) = 0;
-        cmap = uint8(cmap);
-        
-        fprintf(logfile, '\n#Graymap');
-        fprintf(logfile, '\n %i', cmap);
-        
-        parfor i = 1:z
-            output{i} = cmap(segmented(:,:,i));
-        end
-    else %strcmp(CorBW, 'r')
-        disp('You chose remove background');
-        mask = segmented > 2;
-        
-        parfor i = 1:z
-            output{i} = image(:,:,i).*uint8(mask(:,:,i));
-        end
+    switch CorBW
+        case 'c'
+            disp('You chose color');
+            switch numSegments
+                case 5
+                    cmap = [
+                        0,0,0
+                        0,0,0
+                        0,1,0
+                        1,0,0
+                        0,0,1];
+                case 4
+                    cmap = [
+                        0,0,0
+                        0,1,0
+                        1,0,0
+                        0,0,1];
+                case 3
+                   cmap = [
+                        0,0,0
+                        0,1,0
+                        0,0,1];
+            end
+
+            fprintf(logfile, '\n#Colormap');
+            fprintf(logfile, '\n#R G B');
+            for r = 1:size(cmap,1)
+                fprintf(logfile, '\n %i %i %i', cmap(r,:));
+            end
+
+            parfor i = 1:z
+               output{i} = label2rgb(segmented(:,:,i),cmap);
+            end
+        case 'b'
+            disp('You chose black and white');
+            cmap = floor([0:numSegments-1]*255/(numSegments-1));
+            cmap(1:2) = 0;
+            cmap = uint8(cmap);
+
+            fprintf(logfile, '\n#Graymap');
+            fprintf(logfile, '\n %i', cmap);
+
+            parfor i = 1:z
+                output{i} = cmap(segmented(:,:,i));
+            end
+        otherwise %strcmp(CorBW, 'r')
+            disp('You chose remove background');
+            %mask = segmented > 2;
+
+            parfor i = 1:z
+                output{i} = image(:,:,i);%.*uint8(mask(:,:,i));
+            end
     end
         
 if showresult

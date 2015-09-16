@@ -46,41 +46,47 @@ centroids = sortrows(centroids,2);
 sorter = centroids(:,1);
 labels = sorter(labels);
 
-% Merge groups 1 & 2
-for i = 1:length(labels)
-    if labels(i) == 1, labels(i) = 2; end
-end
-
 % Fix any non-contiguous label assignments buy reassigning them to their
 % next most probable distribution.
 [labels,~] = checklabels(labels,probabilities,0,length(labels));
 
 %% Add a fifth phase -----------------------------------------------------
 
-BUFFER = 0.5; % The distance on either side of the 3-4 boundary to insert the fifth phase.
+BUFFER = 0.5; % The distance on either side of the logroup-higroup boundary to insert the fifth phase.
 
-if numdists == 4
-    warning('numdists is 4. An additional phase between 3 and 4 +/- %g will be created.',BUFFER);
-    % Find where the 4th and 3rd group intersect. We have to check from the
-    % right because checklabels still doesn't do it's job.
-    right = length(labels);
-    while labels(right-1) > 3, right = right - 1; end
+switch numdists
+    case {2, 3, 4}
+        higroup = numdists;
+        logroup = higroup -1;
+        
+        warning('numdists is 4 or 2. An additional phase between last groups +/- %g will be created.',BUFFER);
+        % Find where the 4th and 3rd group intersect. We have to check from the
+        % right because checklabels still doesn't do it's job.
+        right = length(labels);
+        while labels(right-1) > logroup, right = right - 1; end
 
-    % Make a new pdf.
-    pdf5 = (probabilities(:,4) - probabilities(:,3))./(probabilities(:,4) + probabilities(:,3));
+        % Make a new pdf.
+        pdf5 = (probabilities(:,higroup) - probabilities(:,logroup))./(probabilities(:,higroup) + probabilities(:,logroup));
 
-    % Determine which grays are in the new region (left,right).
-    left = right - 1; hi = length(range);
-    while right < hi && pdf5(right) <= BUFFER
-        right = right + 1;
-    end
-    while left > 0 && pdf5(left) >= -BUFFER
-        left = left - 1;
-    end
-    
-    % Relabel the region.
-    labels(left+1:right-1) = 4;
-    labels(right:end) = 5;
+        % Determine which grays are in the new region (left,right).
+        left = right - 1; hi = length(range);
+        while right < hi && pdf5(right) <= BUFFER
+            right = right + 1;
+        end
+        while left > 0 && pdf5(left) >= -BUFFER
+            left = left - 1;
+        end
+
+        % Relabel the region.
+        labels(left+1:right-1) = higroup;
+        labels(right:end) = higroup+1;
+        
+        % Add air group
+        if numdists == 2
+            labels = labels+1;
+            labels(1) = 1;
+        end
+    otherwise
 end
 end
 
