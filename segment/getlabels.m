@@ -65,15 +65,7 @@ if(numdists < 2 || numdists > 5)
     error('numdists cannot be: %i', numdists);
 end
               
-% numdists = 2: Add 1-background
-if numdists == 2
-    warning('numdists is 2. An additional phase at 0 will be created.');
-    labels = labels+1;
-    labels(1) = 1;
-    numdists = 3;
-end
-
-% numdists = 3,4: insert 3-mix
+% numdists = 2,3,4: insert 3-mix
 if numdists < 5
     higroup = numdists;
     logroup = higroup -1;
@@ -102,13 +94,21 @@ if numdists < 5
     numdists = numdists + 1;
 end
 
+% numdists = 3: Add 1-background
+if numdists == 3
+    warning('numdists is 2. An additional phase at 0 will be created.');
+    labels = labels+1;
+    labels(1) = 1;
+    numdists = numel(unique(labels));
+end
+
 % numdists = 5: merge groups 1 and 2
 if numdists == 5
     
     labels = labels - 1;
     labels = labels + double(labels == 0);
         
-    numdists = numdists-1;
+    numdists = numel(unique(labels));
 end
         
 assert(numdists == 4);
