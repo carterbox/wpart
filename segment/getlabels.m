@@ -46,6 +46,8 @@ centroids = sortrows(centroids,2);
 sorter = centroids(:,1);
 labels = sorter(labels);
 
+assert(numel(unique(labels)) == numdists);
+
 % Fix any non-contiguous label assignments buy reassigning them to their
 % next most probable distribution.
 [labels,~] = checklabels(labels,probabilities,0,length(labels));
@@ -59,7 +61,9 @@ labels = sorter(labels);
 BUFFER = 0.5; % The distance on either side of the logroup-higroup boundary
               % to insert the fifth phase.
 
-if(numdists < 2 && numdists > 5), error('numdists cannot be: %i', numdists);
+if(numdists < 2 || numdists > 5)
+    error('numdists cannot be: %i', numdists);
+end
               
 % numdists = 2: Add 1-background
 if numdists == 2
@@ -102,7 +106,7 @@ end
 if numdists == 5
     
     labels = labels - 1;
-    labels = labels + uint8(labels == 0);
+    labels = labels + double(labels == 0);
         
     numdists = numdists-1;
 end

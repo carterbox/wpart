@@ -4,6 +4,7 @@ function [labels,probabilities] = checklabels(labels,probabilities,~,~)
 % labeled correctly and that the gaussians were sorted correctly.
 left = length(labels);
 lo = 0; hi = labels(left); 
+numdistscheck = numel(unique(labels));
 
 while left > lo
     
@@ -16,10 +17,20 @@ while left > lo
         end
     % The function has reached a step. 
     elseif labels(left) < hi
-        hi = labels(left);
+        
+        % Each step should go down exactly one.
+        if hi - labels(left) == 1
+            hi = labels(left);
+        else
+            probabilities(left,labels(left)) = -1; 
+            [~,labels(left)] = max(probabilities(left,:),[],2);
+        end
+    
     end
         
     left = left - 1;
     %reshape(labels,32,8)
 end
+
+assert(numel(unique(labels)) == numdistscheck);
 end
