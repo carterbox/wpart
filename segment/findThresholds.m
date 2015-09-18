@@ -21,9 +21,9 @@ function labels = findThresholds( sample, numdists, bitdepth, logfile )
 % GLOBAL VARIABLES
 MAXITER = 800; % Maxium iterations for EM fitting of gaussians
 TERMCRIT = 1e-7;
-REPS = 5; % Number of times to attempt EM fitting of guassians
+REPS = 3; % Number of times to attempt EM fitting of guassians
 MAXINT = 2^bitdepth - 1;
-UPPERTHRESH = MAXINT*98;
+UPPERTHRESH = MAXINT*0.99;
 LOWERTHRESH = 0;
 sample = double(sample(:));
 
@@ -76,6 +76,8 @@ if MAXINT < 256
 fprintf(logfile, '\r\n greys group assignments: \r\n');
 fprintf(logfile, '%i %i %i %i %i %i %i %i | %i %i %i %i %i %i %i %i \r\n', labels);
 end
+
+figure, plot(labels);
 
 % Set a new color order that matches our segmentation scheme.
 set(groot,'defaultAxesColorOrder',COLORORDER);
