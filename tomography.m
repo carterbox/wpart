@@ -13,7 +13,7 @@ classdef tomography
         bottom = []; % Location of bottom slice
         
         bitdepth = 8;
-        numdists = 2;
+        numdists = [4,2];
         thresh16 = [];
         
         samplename = ''; % The name of the sample with leading /
@@ -24,6 +24,7 @@ classdef tomography
     end
     
     methods
+        % Constructor for the class.
         function obj = tomography(height,width,depth,samplename)
             % Class constructor
             
@@ -34,10 +35,43 @@ classdef tomography
             if samplename(1) ~= '/', samplename = ['/' samplename]; end
             obj.samplename = samplename;
         end
-        function obj = setProjname(obj,words,numbers)
-            % Allows for quickly setting a series of projnames with the 
-            % same start but different numbers at the end. e.g. /sample_1,
-            % /sample_2, /sample_3
+        
+        % Allows for 2 or 0 inputs. If 0 inputs are given, it will draw a
+        % histogram and prompt the user to give inputs.
+        function obj = setnumdists(obj, varargin)
+           if numel(varargin) == 2
+               obj.numdists(1) = varargin{1};
+               obj.numdists(2) = varargin{2};
+           else
+               key = 1;
+               if ~isempty(obj.projname) && exist([obj.subset_dir obj.projname{key}],'dir')
+                   addpath(genpath([obj.subset_dir obj.projname{key}]));
+                   
+                   stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16');
+                   stack = stack(:,:,random('unid', obj.depth, [1,round(obj.depth*0.02)]));
+                                 
+                   h = figure(1);
+                   stack = removex(stack(:),2^16-1,1);
+                   histogram(stack, 2^16,'Normalization','pdf');
+                   axis([0 2^16 0 inf]);
+                   
+                   obj.numdists(1) = input('How many distributions for phase 1? ');
+                   obj.numdists(2) = input('How many distributions for phase 2? ');
+
+                   close(h);
+               else
+                   warning('Unable to show histogram; project name does not exist.');
+               end
+           end
+            
+            
+        end
+        
+        % Allows for quickly setting a series of projnames with the 
+        % same start but different numbers at the end. e.g. /sample_1,
+        % /sample_2, /sample_3
+        function obj = setprojname(obj,words,numbers)
+            
             
             n = numel(numbers);
             if words(1) ~= '/', words = ['/' words]; end            
@@ -47,11 +81,12 @@ classdef tomography
                 obj.projname{i} = sprintf('%s%i',words,numbers(i));
             end
         end
+        
+        % Collects subsets from tomography volumes and saves them in
+        % the subset directory.
         function obj = gatherSubsets(obj)
-            % Collects subsets from tomography volumes and saves them in
-            % the subset directory.
-            
-            for i = 1:numel(obj.samplename)
+     
+            for i = 1:numel(obj.projname)
                 % Creating a working directories
                 outdir = [obj.subset_dir obj.projname{i}];
                 indir = [obj.recon_dir obj.projname{i}];
@@ -81,7 +116,8 @@ classdef tomography
                 fclose( logfile );
             end
         end
-        function obj = segmentSubsets(obj) 
+        
+        function obj = segmentSubsets(obj)
             % Creating a Log file
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             logfile = fopen([OUTDIR '/log.txt'],'a');
@@ -104,26 +140,29 @@ classdef tomography
                 stack = stack(:,:,random('unid', obj.depth, [1,numsamples]));
                 
                 fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
-                labels = findThresholds(stack, 3, 16, 1);
+                labels = findThresholds(stack, obj.numdists(1), 16, 1);
+                print([OUTDIR sprintf('/sample%0i',key)], '-dpng');
                 
                 obj.thresh16(key) = find(labels>1,1);
                 stack = rescale(stack, 8, logfile, obj.thresh16(key));
                 
                 sample(:,:,:,key) = stack;
+                
+                %if ~input('Continue?'), return; end
             end
-            sample = double(sample(:));
-
-            
+           
             %% Finding the gaussian distribution mixture -----------------------------
 
             fprintf('FINDING DISTRIBUTIONS FOR GROUP\n');
             diary([OUTDIR '/log.txt']);
-            labels = findThresholds(sample, 3, obj.bitdepth, logfile);
+            labels = findThresholds(sample, obj.numdists(2), obj.bitdepth, logfile);
             clear sample;
             disp('Saving labels ...');
             save([OUTDIR '/labels.mat'], 'labels', 'obj');
             print([OUTDIR '/mixedgaussians'], '-dpng');
-            diary off; 
+            diary off;
+            
+            %if ~input('Continue?'), return; end
             %% Segmenting and Smoothing ----------------------------------------------
             %if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
 
@@ -152,8 +191,17 @@ classdef tomography
             end
             fprintf(logfile,'\n');
             fclose(logfile); close all;
-        end
+        end    
     end
-    
+end
+
+function A = removex(A,hi,lo)
+%REMOVEX removes values in A that are outside the range (lo,hi).
+    if(nargin) < 3, lo = -1; end
+
+    A = sort(A);
+    right = sum(A < hi);
+    left = find(A > lo,1);
+    A = A(left:right);
 end
 
