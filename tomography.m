@@ -14,7 +14,7 @@ classdef tomography
         
         bitdepth = 8;
         numdists = [4,2];
-        thresh16 = [];
+        thresh16;
         
         samplename = ''; % The name of the sample with leading /
         projname = {}; % The names of each of the scans of the sample with leading /
@@ -132,18 +132,19 @@ classdef tomography
             fprintf('NUM SAMPLED SLICES IS %i \n', numsamples);
             
             sample(obj.height,obj.width,numsamples,NUMSTACKS) = uint8(0);
-            obj.thresh16 = zeros(NUMSTACKS,1);
+            
             for key = 1:NUMSTACKS
                 addpath(genpath([obj.subset_dir obj.projname{key}]));
                 stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16');
 
                 stack = stack(:,:,random('unid', obj.depth, [1,numsamples]));
-                
-                fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
-                labels = findThresholds(stack, obj.numdists(1), 16, 1);
-                print([OUTDIR sprintf('/sample%0i',key)], '-dpng');
-                
-                obj.thresh16(key) = find(labels>1,1);
+                if true
+                    fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
+                    labels = findThresholds(stack, obj.numdists(1), 16, 1);
+                    print([OUTDIR sprintf('/sample%0i',key)], '-dpng');
+
+                    obj.thresh16(key) = find(labels>1,1);
+                end
                 stack = rescale(stack, 8, logfile, obj.thresh16(key));
                 
                 sample(:,:,:,key) = stack;
@@ -152,17 +153,23 @@ classdef tomography
             end
            
             %% Finding the gaussian distribution mixture -----------------------------
-
-            fprintf('FINDING DISTRIBUTIONS FOR GROUP\n');
-            diary([OUTDIR '/log.txt']);
-            labels = findThresholds(sample, obj.numdists(2), obj.bitdepth, logfile);
-            clear sample;
-            disp('Saving labels ...');
-            save([OUTDIR '/labels.mat'], 'labels', 'obj');
-            print([OUTDIR '/mixedgaussians'], '-dpng');
-            diary off;
             
-            %if ~input('Continue?'), return; end
+            tryagain = true;
+            while tryagain
+                fprintf('FINDING DISTRIBUTIONS FOR GROUP\n');
+                diary([OUTDIR '/log.txt']);
+                labels = findThresholds(sample, obj.numdists(2), obj.bitdepth, logfile);
+                clear sample;
+                disp('Saving labels ...');
+                save([OUTDIR '/labels.mat'], 'labels', 'obj');
+                print([OUTDIR '/mixedgaussians'], '-dpng');
+                diary off;
+
+                tryagain = input('Continue?');
+                if tryagain
+                    obj.numdists(2) = input('provide a new numdists: ');
+                end
+            end
             %% Segmenting and Smoothing ----------------------------------------------
             %if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
 
@@ -174,9 +181,9 @@ classdef tomography
                 stack = uint8(stack);
 
                 % Segment the image according to the lookup-table.
-                %fprintf('Mapping...\n');
-                %segmented = labels(stack + 1);
-                segmented = woodmap(stack, labels);
+                fprintf('Mapping...\n');
+                segmented = labels(stack + 1);
+                %segmented = woodmap(stack, labels);
 
                 segmented = removeislands(segmented, 0, 80);
 
