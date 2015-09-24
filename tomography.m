@@ -159,17 +159,18 @@ classdef tomography
                 fprintf('FINDING DISTRIBUTIONS FOR GROUP\n');
                 diary([OUTDIR '/log.txt']);
                 labels = findThresholds(sample, obj.numdists(2), obj.bitdepth, logfile);
-                clear sample;
                 disp('Saving labels ...');
                 save([OUTDIR '/labels.mat'], 'labels', 'obj');
                 print([OUTDIR '/mixedgaussians'], '-dpng');
                 diary off;
 
-                tryagain = input('Continue?');
+                tryagain = input('Try Again? (0/1)');
                 if tryagain
                     obj.numdists(2) = input('provide a new numdists: ');
                 end
             end
+            
+            clear sample;
             %% Segmenting and Smoothing ----------------------------------------------
             %if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
 
