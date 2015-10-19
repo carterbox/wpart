@@ -1,7 +1,9 @@
-function [ stack ] = imstackload( directory, type )
+function [ stack ] = imstackload( directory, type, fraction )
 %imstack Returns a 3D images stack of all images in the directory. Only
 %works for stacks of images whose largest images is listed first. Does not
 %sort directory before loading images.
+
+if nargin < 3, fraction = 1; end
 
 kEXTENSION = {'.tif', '.png', '.tiff'};
 
@@ -28,6 +30,13 @@ if image_count == 0
     error('No images found!');
 end
 clear fcontents;
+
+if fraction < 1
+    numsamples = ceil(fraction*image_count);
+    warning('NUM SAMPLED SLICES IS %i \n', numsamples);
+    namestack = namestack{random('unid', image_count, [1,numsamples])};
+    image_count = numsamples;
+end
 
 %determines the size of the images that will be loaded
 [m,n,o] = size(imread(namestack{1}));
