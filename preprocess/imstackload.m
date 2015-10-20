@@ -33,8 +33,8 @@ clear fcontents;
 
 if fraction < 1
     numsamples = ceil(fraction*image_count);
-    warning('NUM SAMPLED SLICES IS %i \n', numsamples);
-    namestack = namestack{random('unid', image_count, [1,numsamples])};
+    %warning('NUM SAMPLED SLICES IS %i \n', numsamples);
+    namestack = namestack(random('unid', image_count, [1,numsamples]));
     image_count = numsamples;
 end
 

@@ -15,6 +15,7 @@ classdef tomography
         bitdepth = 8;
         numdists = [4,2];
         thresh16;
+        labels = {};
         
         samplename = ''; % The name of the sample with leading /
         projname = {}; % The names of each of the scans of the sample with leading /
@@ -124,52 +125,31 @@ classdef tomography
             fprintf(logfile,['\n' datestr(datetime('now')) '\n\n']);
             
             NUMSTACKS = length(obj.projname);
-
-            
-            
-            % Sample 2 percent of the data to reduce memory and processing consumption.
-            numsamples = ceil(0.02*obj.depth);
-            fprintf('NUM SAMPLED SLICES IS %i \n', numsamples);
-            
-            sample(obj.height,obj.width,numsamples,NUMSTACKS) = uint8(0);
             
             for key = 1:NUMSTACKS
                 addpath(genpath([obj.subset_dir obj.projname{key}]));
-                stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16');
+                % Sample 2 percent of the data to reduce memory and processing consumption.
+                stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16', 0.005);
 
-                stack = stack(:,:,random('unid', obj.depth, [1,numsamples]));
-                if true
+                tryagain = true;
+                while tryagain
                     fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
-                    labels = findThresholds(stack, obj.numdists(1), 16, 1);
+                    diary([OUTDIR '/log.txt']);
+
+                    llabels = findThresholds(stack, obj.numdists(1), 16, 1);
                     print([OUTDIR sprintf('/sample%0i',key)], '-dpng');
 
-                    obj.thresh16(key) = find(labels>1,1);
-                end
-                stack = rescale(stack, 8, logfile, obj.thresh16(key));
-                
-                sample(:,:,:,key) = stack;
-                
-                %if ~input('Continue?'), return; end
-            end
-           
-            %% Finding the gaussian distribution mixture -----------------------------
-            
-            tryagain = true;
-            while tryagain
-                fprintf('FINDING DISTRIBUTIONS FOR GROUP\n');
-                diary([OUTDIR '/log.txt']);
-                labels = findThresholds(sample, obj.numdists(2), obj.bitdepth, logfile);
-                clear sample;
-                disp('Saving labels ...');
-                save([OUTDIR '/labels.mat'], 'labels', 'obj');
-                print([OUTDIR '/mixedgaussians'], '-dpng');
-                diary off;
+                    obj.thresh16(key) = find(llabels>1,1);
+                    obj.labels{key} = llabels;
+                    diary off;
 
-                tryagain = input('Continue?');
-                if tryagain
-                    obj.numdists(2) = input('provide a new numdists: ');
+                    tryagain = input('Continue?');
+                    if tryagain
+                        obj.numdists(1) = input('provide a new numdists: ');
+                    end
                 end
             end
+            
             %% Segmenting and Smoothing ----------------------------------------------
             %if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
 
@@ -177,24 +157,21 @@ classdef tomography
                 % Load each of the stacks to process them separately
                 stack = imstackload([obj.subset_dir obj.projname{key}],...
                                     sprintf('uint%i', 16));
-                stack = rescale(stack, obj.bitdepth, 1, obj.thresh16(key));
-                stack = uint8(stack);
 
                 % Segment the image according to the lookup-table.
                 fprintf('Mapping...\n');
-                segmented = labels(stack + 1);
+                segmented = obj.labels{key}(stack + 1);
                 %segmented = woodmap(stack, labels);
 
                 segmented = removeislands(segmented, 0, 80);
 
-                output = woodcolor('remove', segmented, 4, logfile, 1, stack);
-                imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),obj.samplename);
-                print([OUTDIR '/comparisonr' num2str(key)],'-dpng');
-
                 output = woodcolor('c', segmented, 4, logfile, 1, stack);
                 imstacksave(output,sprintf('%s/color%02i',OUTDIR,key),obj.samplename);
                 print([OUTDIR '/comparisonc' num2str(key)],'-dpng');
-
+                
+                output = uint8(rescale(stack, obj.bitdepth, 1, obj.thresh16(key)));
+                imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),obj.samplename);
+                print([OUTDIR '/comparisonr' num2str(key)],'-dpng');               
             end
             fprintf(logfile,'\n');
             fclose(logfile); close all;
