@@ -73,17 +73,17 @@ output = cell(z,1);
             end
         otherwise %strcmp(CorBW, 'r')
             disp('You chose remove background');
-            %mask = segmented > 2;
+            mask = segmented > 1;
 
             parfor i = 1:z
-                output{i} = image(:,:,i);%.*uint8(mask(:,:,i));
+                output{i} = image(:,:,i).*uint8(mask(:,:,i));
             end
     end
         
 if showresult
     fig = output{1};
     figure('Name','Comparison of original and segmented image.'), subplot(1,2,1),imshow(fig);
-    subplot(1,2,2), imshow(uint8(image(:,:,1)));
+    subplot(1,2,2), imshow((image(:,:,1)));
 end
 
 end

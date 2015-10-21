@@ -15,7 +15,7 @@ function [ B ] = removeislands( A, ~, minislandsize )
 %
 % GLOBAL VARIABLES
 
-CONNECTIVITY = 8;   % 2D: 4 or 8
+CONNECTIVITY = 18;   % 2D: 4 or 8
                     % 3D: 6, 18, or 26;
                     
 %% -----------------------------------------------------------------------
