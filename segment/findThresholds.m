@@ -1,4 +1,4 @@
-function labels = findThresholds( sample, numdists, bitdepth, logfile )
+function [labels, stepfig, gaussfig] = findThresholds( sample, numdists, bitdepth, logfile )
 %FINDTHRESHOLDS uses expectation maximization to cluster pixel
 % intensitities into groups.
 % 
@@ -77,11 +77,11 @@ fprintf(logfile, '\r\n greys group assignments: \r\n');
 fprintf(logfile, '%i %i %i %i %i %i %i %i | %i %i %i %i %i %i %i %i \r\n', labels);
 end
 
-figure, plot(labels);
+stepfig = figure(1); plot(labels);
 
 % Set a new color order that matches our segmentation scheme.
 set(groot,'defaultAxesColorOrder',COLORORDER);
-figure,
+gaussfig = figure(2);
 % Plot the histogram in the background.
 histogram(sample, MAXINT,'Normalization','pdf',...
           'EdgeColor',[0.5 0.5 0.5],'FaceColor',[0.5 0.5 0.5]);

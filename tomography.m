@@ -136,16 +136,16 @@ classdef tomography
                     fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
                     diary([OUTDIR '/log.txt']);
 
-                    llabels = findThresholds(stack, obj.numdists(1), 16, 1);
-                    print([OUTDIR sprintf('/sample%0i',key)], '-dpng');
+                    [llabels, ~, gaussfig] = findThresholds(stack, obj.numdists(1), 16, 1);
+                    print(gaussfig, [OUTDIR sprintf('/sample%0i',key)], '-dpng');
 
                     obj.thresh16(key) = find(llabels>1,1);
                     obj.labels{key} = llabels;
                     diary off;
 
-                    tryagain = input('Continue?');
+                    tryagain = ~input('Does this look good? (Yes - 1 / No - 0) ');
                     if tryagain
-                        obj.numdists(1) = input('provide a new numdists: ');
+                        obj.numdists(1) = input('Provide a new numdists: ');
                     end
                 end
             end
@@ -163,15 +163,14 @@ classdef tomography
                 segmented = obj.labels{key}(stack + 1);
                 %segmented = woodmap(stack, labels);
 
-                segmented = removeislands(segmented, 0, 80);
+                segmentedi = removeislands(segmented, 0, 80);
 
-                output = woodcolor('c', segmented, 4, logfile, 1, stack);
-                imstacksave(output,sprintf('%s/color%02i',OUTDIR,key),obj.samplename);
-                print([OUTDIR '/comparisonc' num2str(key)],'-dpng');
+                output = woodcolor('c', segmentedi, 4, logfile, 1, uint16(stack(:,:,1)));
+                imstacksave(output,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
+                print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
                 
                 output = uint8(rescale(stack, obj.bitdepth, 1, obj.thresh16(key)));
-                imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),obj.samplename);
-                print([OUTDIR '/comparisonr' num2str(key)],'-dpng');               
+                imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),obj.samplename);             
             end
             fprintf(logfile,'\n');
             fclose(logfile); close all;
