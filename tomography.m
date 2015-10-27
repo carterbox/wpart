@@ -118,7 +118,7 @@ classdef tomography
             end
         end
         
-        function obj = segmentSubsets(obj)
+        function obj = fitDists(obj)
             % Creating a Log file
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             logfile = fopen([OUTDIR '/log.txt'],'a');
@@ -129,30 +129,33 @@ classdef tomography
             for key = 1:NUMSTACKS
                 addpath(genpath([obj.subset_dir obj.projname{key}]));
                 % Sample 2 percent of the data to reduce memory and processing consumption.
-                stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16', 0.005);
+                stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16', 0.01);
 
                 tryagain = true;
                 while tryagain
                     fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
-                    diary([OUTDIR '/log.txt']);
 
-                    [llabels, ~, gaussfig] = findThresholds(stack, obj.numdists(1), 16, 1);
-                    print(gaussfig, [OUTDIR sprintf('/sample%0i',key)], '-dpng');
+                    [llabels, ~, gaussfig] = findThresholds(stack, obj.numdists(1), 16, logfile);
+                    print(gaussfig, [OUTDIR sprintf('/sample%02i',key)], '-dpng');
 
                     obj.thresh16(key) = find(llabels>1,1);
                     obj.labels{key} = llabels;
-                    diary off;
-
+                   
                     tryagain = ~input('Does this look good? (Yes - 1 / No - 0) ');
                     if tryagain
                         obj.numdists(1) = input('Provide a new numdists: ');
                     end
                 end
             end
-            
-            %% Segmenting and Smoothing ----------------------------------------------
+            save([OUTDIR sprintf('/tomography.mat')], 'obj');
+        end
+        
+        function obj = segmentSubsets(obj)
+            OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
+            load([OUTDIR sprintf('/tomography.mat')], 'obj');
+            logfile = fopen([OUTDIR '/log.txt'],'a');
             %if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
-
+            NUMSTACKS = length(obj.projname);
             for key = 1:NUMSTACKS
                 % Load each of the stacks to process them separately
                 stack = imstackload([obj.subset_dir obj.projname{key}],...
@@ -163,7 +166,7 @@ classdef tomography
                 segmented = obj.labels{key}(stack + 1);
                 %segmented = woodmap(stack, labels);
 
-                segmentedi = removeislands(segmented, 0, 80);
+                segmentedi = removeislands(segmented, 8, 100);
 
                 output = woodcolor('c', segmentedi, 4, logfile, 1, uint16(stack(:,:,1)));
                 imstacksave(output,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);

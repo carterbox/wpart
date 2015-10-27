@@ -1,4 +1,4 @@
-function [ B ] = removeislands( A, ~, minislandsize )
+function [ B ] = removeislands( A, CONNECTIVITY, minislandsize )
 %REMOVEISLANDS removes islands from each phase of the image. #parallel
 % The image is segmented into NUMPARTS layers where the Nth layer is a
 % boolean array of x >= N. Island are removed from each layer and then
@@ -15,7 +15,7 @@ function [ B ] = removeislands( A, ~, minislandsize )
 %
 % GLOBAL VARIABLES
 
-CONNECTIVITY = 18;   % 2D: 4 or 8
+%CONNECTIVITY = 6;   % 2D: 4 or 8
                     % 3D: 6, 18, or 26;
                     
 %% -----------------------------------------------------------------------

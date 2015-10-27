@@ -32,6 +32,7 @@ t.segmented_dir = '/media/OCT14M/Segmentations/lookbook'; % The directory to put
 
 %t = t.gatherSubsets();
 t = t.setnumdists(3,2);
+%t = t.fitDists();
 t = t.segmentSubsets();
 
 % %%
