@@ -23,7 +23,7 @@ NUMSCANS = 5;
 t.rotationCW = repmat(29,[1,NUMSCANS]); 
 t.x0 = repmat(1119,[1,NUMSCANS]); 
 t.y0 = repmat(1149,[1,NUMSCANS]);
-t.bottom = repmat(1600,[1,NUMSCANS]);
+t.bottom = repmat(1600,1);
 
 t = t.setprojname('recon_proj_', 84:84+NUMSCANS-1);
 t.recon_dir = '/media/OCT14M/Reconstructions'; % The directory of the reconstructions

@@ -23,7 +23,7 @@ MAXITER = 800; % Maxium iterations for EM fitting of gaussians
 TERMCRIT = 1e-7;
 REPS = 3; % Number of times to attempt EM fitting of guassians
 MAXINT = 2^bitdepth - 1;
-UPPERTHRESH = MAXINT*0.99;
+UPPERTHRESH = MAXINT;
 LOWERTHRESH = 0;
 sample = double(sample(:));
 
