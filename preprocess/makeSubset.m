@@ -19,9 +19,18 @@ function stack = makeSubset(indir, rotationCW, x_corner, y_corner, width, height
 [namestack, numslices] = imnamestack( indir, notch, depth);
 % Preallocate space for the images.
 [m,n] = size(imread(namestack{1}));
-% TODO: Automagically check the bitdepth of the first loaded image and
+
+% Automagically check the bitdepth of the first loaded image and
 % allocate the appropriate array.
-stack(height, width, numslices) = uint16(0);
+info = imfinfo(namestack{1});
+switch(info.BitDepth)
+    case 8
+        stack(height, width, numslices) = uint8(0);
+    case 16
+        stack(height, width, numslices) = uint16(0);
+    case 32
+        stack(height, width, numslices) = single(0);
+end
 
 fprintf('Rotating and cropping ... ');
 

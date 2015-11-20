@@ -12,11 +12,11 @@ function stack = rescale(stack, bitdepth, logfile, lowerthresh)
 %   stack (double): the rescaled stack
 %
 %% ----------------------------------------------------------------------------
-if(nargin) < 4, lowerthresh = 0; end
 
 % Record the old values and convert the old values to double.
 stack = double(stack);
 large = max(stack(:));
+if(nargin) < 4, lowerthresh = min(stack(:)); end
 small = max(min(stack(:)),lowerthresh);
 fprintf(logfile, '\nOLD MAX: %.1f   OLD MIN: %.1f \n', large, small);
 
