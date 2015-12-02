@@ -1,4 +1,4 @@
-function stack = rescale(stack, bitdepth, logfile, lowerthresh)
+function stack = rescale(stack, bitdepth, logfile, lowerthresh, upperthresh)
 %RESCALE rescales the pixel values to fit inside BITDEPTH.
 %   Values are scaled so the largest value become maxint of BITDEPTH and the
 %   smallest value becomes minint of BITDEPTH.
@@ -15,7 +15,10 @@ function stack = rescale(stack, bitdepth, logfile, lowerthresh)
 
 % Record the old values and convert the old values to double.
 stack = double(stack);
-large = max(stack(:));
+
+if(nargin) < 5, upperthresh = max(stack(:)); end
+large = upperthresh;
+
 if(nargin) < 4, lowerthresh = min(stack(:)); end
 small = max(min(stack(:)),lowerthresh);
 fprintf(logfile, '\nOLD MAX: %.1f   OLD MIN: %.1f \n', large, small);

@@ -115,6 +115,7 @@ classdef tomography
                 disp('Saving subset ...');
                 imstacksave(uint16(stack), outdir , obj.projname{i} );
                 fclose( logfile );
+                clear stack;
             end
         end
         
@@ -152,7 +153,7 @@ classdef tomography
         
         function obj = segmentSubsets(obj)
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
-            load([OUTDIR sprintf('/tomography.mat')], 'obj');
+            %load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
             %if size(gcp) == 0, p = parpool(numworkers); else p = gcp; end
             NUMSTACKS = length(obj.projname);
@@ -163,16 +164,16 @@ classdef tomography
 
                 % Segment the image according to the lookup-table.
                 fprintf('Mapping...\n');
-                segmented = obj.labels{key}(stack + 1);
+                %segmented = obj.labels{key}(stack + 1);
                 %segmented = woodmap(stack, labels);
 
-                segmentedi = removeislands(segmented, 8, 100);
+               % segmentedi = removeislands(segmented, 8, 100);
 
-                output = woodcolor('c', segmentedi, 4, logfile, 1, uint16(stack(:,:,1)));
-                imstacksave(output,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
-                print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
+                %output = woodcolor('c', segmentedi, 4, logfile, 1, uint16(stack(:,:,1)));
+                %imstacksave(output,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
+               % print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
                 
-                output = uint8(rescale(stack, obj.bitdepth, 1, obj.thresh16(key)));
+                output = uint8(rescale(stack, obj.bitdepth, 1, obj.thresh16(key),2^16*0.5));
                 imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),obj.samplename);             
             end
             fprintf(logfile,'\n');
