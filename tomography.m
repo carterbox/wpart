@@ -106,8 +106,10 @@ classdef tomography
                 fprintf(logfile, 'depth: %i\n', ldepth );
                 if ldepth ~= obj.depth, warning('Desired stack depth not reached.'); end
                 stack = rescale(stack, 16, logfile);
-                imshow(uint8(stack(:,:,1)),'InitialMagnification','fit')
-                
+                try 
+                    imshow(uint8(stack(:,:,1)),'InitialMagnification','fit')
+                catch
+                end
                 % if(~input('Is this the slice you want? (1 Yes / 0 No)\n'))
                 %     return;
                 % end
@@ -130,8 +132,21 @@ classdef tomography
             for key = 1:NUMSTACKS
                 addpath(genpath([obj.subset_dir obj.projname{key}]));
                 % Sample 2 percent of the data to reduce memory and processing consumption.
-                stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16', 0.01);
-
+                stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16', 0.0025);
+                hi = max(stack(:));
+                
+                %Mask out areas not adjacent to adhesive in order to
+                %improve histogram quality.
+                for slice = 1:size(stack,3)
+                    img = stack(:,:,slice);
+                    mask = img > 0.9*hi;
+                    R = 33; H = 4; N = 8;
+                    %SE = strel('ball', R, H, N);
+                    SE = strel('octagon', R);
+                    mask = imdilate(mask, SE);
+                    stack(:,:,slice) = uint16(img.*uint16(mask));
+                end
+                
                 tryagain = true;
                 while tryagain
                     fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
@@ -152,6 +167,16 @@ classdef tomography
         end
         
         function obj = segmentSubsets(obj)
+            
+            function inlinewoodmap(labels)
+            %WOODMAP takes an image and remaps it to 256 values according to labels.
+            %   This method allows for lower memory usage than directly converting the
+            %   entire array at once.
+                parfor i = 1:numel(stack)
+                    stack(i) = labels(stack(i) + 1);
+                end
+            end
+            
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             %load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
@@ -161,20 +186,30 @@ classdef tomography
                 % Load each of the stacks to process them separately
                 stack = imstackload([obj.subset_dir obj.projname{key}],...
                                     sprintf('uint%i', 16));
+                referenceslice = uint16(stack(:,:,1));
+                
+%                 output = uint8(rescale(stack, obj.bitdepth, 1, obj.thresh16(key),2^16));
+%                 imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),sprintf('%s_%02i',obj.samplename,key));
+%                 clear output;
 
                 % Segment the image according to the lookup-table.
                 fprintf('Mapping...\n');
-                %segmented = obj.labels{key}(stack + 1);
-                %segmented = woodmap(stack, labels);
-
-               % segmentedi = removeislands(segmented, 8, 100);
-
-                %output = woodcolor('c', segmentedi, 4, logfile, 1, uint16(stack(:,:,1)));
-                %imstacksave(output,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
-               % print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
+                for chunk_start = 1:10^7:size(stack,3)
+                    chunk = stack(chunkstart:min([chunkstart+10^7-1;size(stack,3)]));
+                    chunk = obj.labels{key}(chunk + 1);
+                    stack(chunkstart:min([chunkstart+10^7-1;size(stack,3)])) = chunk;
+                end
+                stack = uint8(stack);
+                    
+                fprintf('Remove Islands...\n');
+                stack = removeislands(stack, 8, 100);
                 
-                output = uint8(rescale(stack, obj.bitdepth, 1, obj.thresh16(key),2^16*0.5));
-                imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),obj.samplename);             
+                fprintf('Coloring...\n');
+                output = woodcolor('c', stack, obj.numdists(1), logfile, 1, referenceslice);
+                imstacksave(output,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
+                print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
+                
+                clear stack;
             end
             fprintf(logfile,'\n');
             fclose(logfile); close all;

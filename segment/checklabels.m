@@ -32,5 +32,7 @@ while left > lo
     %reshape(labels,32,8)
 end
 
-assert(numel(unique(labels)) == numdistscheck);
+if(numel(unique(labels)) ~= numdistscheck)
+   warning('Lost some dists.') 
+end
 end
