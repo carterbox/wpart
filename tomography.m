@@ -40,16 +40,15 @@ classdef tomography
         % Allows for 2 or 0 inputs. If 0 inputs are given, it will draw a
         % histogram and prompt the user to give inputs.
         function obj = setnumdists(obj, varargin)
-           if numel(varargin) == 2
+           if numel(varargin) == 1
                obj.numdists(1) = varargin{1};
-               obj.numdists(2) = varargin{2};
+               %obj.numdists(2) = varargin{2};
            else
                key = 1;
                if ~isempty(obj.projname) && exist([obj.subset_dir obj.projname{key}],'dir')
                    addpath(genpath([obj.subset_dir obj.projname{key}]));
                    
-                   stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16');
-                   stack = stack(:,:,random('unid', obj.depth, [1,round(obj.depth*0.02)]));
+                   stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16', 0.02);
                                  
                    h = figure(1);
                    stack = removex(stack(:),2^16-1,1);
@@ -57,7 +56,7 @@ classdef tomography
                    axis([0 2^16 0 inf]);
                    
                    obj.numdists(1) = input('How many distributions for phase 1? ');
-                   obj.numdists(2) = input('How many distributions for phase 2? ');
+                   %obj.numdists(2) = input('How many distributions for phase 2? ');
 
                    close(h);
                else
@@ -139,12 +138,13 @@ classdef tomography
                 %improve histogram quality.
                 for slice = 1:size(stack,3)
                     img = stack(:,:,slice);
-                    mask = img > 0.9*hi;
+                    mask = img > 0.88*hi;
                     R = 33; H = 4; N = 8;
                     %SE = strel('ball', R, H, N);
                     SE = strel('octagon', R);
                     mask = imdilate(mask, SE);
                     stack(:,:,slice) = uint16(img.*uint16(mask));
+                    imshow(stack(:,:,slice));
                 end
                 
                 tryagain = true;
@@ -161,22 +161,13 @@ classdef tomography
                     if tryagain
                         obj.numdists(1) = input('Provide a new numdists: ');
                     end
+                    close all;
                 end
             end
             save([OUTDIR sprintf('/tomography.mat')], 'obj');
         end
         
         function obj = segmentSubsets(obj)
-            
-            function inlinewoodmap(labels)
-            %WOODMAP takes an image and remaps it to 256 values according to labels.
-            %   This method allows for lower memory usage than directly converting the
-            %   entire array at once.
-                parfor i = 1:numel(stack)
-                    stack(i) = labels(stack(i) + 1);
-                end
-            end
-            
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             %load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
@@ -194,18 +185,20 @@ classdef tomography
 
                 % Segment the image according to the lookup-table.
                 fprintf('Mapping...\n');
-                for chunk_start = 1:10^7:size(stack,3)
-                    chunk = stack(chunkstart:min([chunkstart+10^7-1;size(stack,3)]));
+                z = size(stack,3);
+                for chunk_start = 1:10:z
+                    chunk = stack(:,:,chunk_start:min([chunk_start+10;z]));
                     chunk = obj.labels{key}(chunk + 1);
-                    stack(chunkstart:min([chunkstart+10^7-1;size(stack,3)])) = chunk;
+                    chunk = removeislands(chunk, 8, 100);
+                    stack(:,:,chunk_start:min([chunk_start+10;z])) = chunk;
                 end
                 stack = uint8(stack);
                     
-                fprintf('Remove Islands...\n');
-                stack = removeislands(stack, 8, 100);
+                %fprintf('Remove Islands...\n');
+                %stack = removeislands(stack, 8, 100);
                 
                 fprintf('Coloring...\n');
-                output = woodcolor('c', stack, obj.numdists(1), logfile, 1, referenceslice);
+                output = woodcolor('c', stack, 4, logfile, 1, referenceslice);
                 imstacksave(output,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
                 print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
                 

@@ -28,15 +28,15 @@ LOWERTHRESH = 0;
 sample = double(sample(:));
 
 COLORORDER = false;
-switch numdists
+switch 4
     case 2
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 1 0;0 0 1];
     case 3
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 1 0;0 0 1];
-    case 4
+    case 0
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 1 0;0 0 1];
-    case 5
-        COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 1 0;1 0 0;0 0 1];
+    case 4
+        COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 1 0;1 0 0;0 0 1];
 end
 
 % Peaks at the edges of the space hinder fitgmdist in doing its job, so 
@@ -60,7 +60,7 @@ if h1 == length(h.Values)
     append = 1:floor(clip/secondheight);
     append = repmat(append,secondheight,1);
     append = append + max(sample);
-    %sample = cat(1,sample,append(:));
+    sample = cat(1,sample,append(:));
     MAXINT = max(append(:));
     figure(g);h = histogram(sample, MAXINT);
 end
@@ -95,6 +95,10 @@ end
 
 % Assign each gray to a group.
 range = 0:MAXINT;
+gaussfig = figure(2);
+% Plot the histogram in the background.
+histogram(sample, max([floor(MAXINT/100);256]),'Normalization','pdf',...
+          'EdgeColor',[0.5 0.5 0.5],'FaceColor',[0.5 0.5 0.5]);
 [labels, separatedpdfs] = getlabels(range',a,s,c);
 
 % Save labels to logfile
