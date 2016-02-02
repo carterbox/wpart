@@ -1,6 +1,7 @@
-function stack = makeSubset(indir, rotationCW, x_corner, y_corner, width, height, depth, notch )
+function stack = makeSubset(indir, rotationCW, x_corner, y_corner, width, height, depth, notch, runquiet )
 %MAKESUBSET prepares a subset from a directory of images.
 %
+% version 1.1.0
 % INPUTS
 %   rotationCW (degrees): a clockwise rotation angle to rotate the images
 %   in INDIR before cutting out the region of interest.
@@ -15,6 +16,8 @@ function stack = makeSubset(indir, rotationCW, x_corner, y_corner, width, height
 %   accordingly.
 %
 %% -----------------------------------------------------------------------
+if(nargin < 8), runquiet = false; end;
+
 % Get the names of all the images in the directory.
 [namestack, numslices] = imnamestack( indir, notch, depth);
 % Preallocate space for the images.
@@ -32,12 +35,27 @@ switch(info.BitDepth)
         stack(height, width, numslices) = single(0);
 end
 
-fprintf('Rotating and cropping ... ');
-
 % Check that the corner location is within the size of the image.
 assert(x_corner > 0 && x_corner < m);
 assert(y_corner > 0 && y_corner < n);
 
+if(~runquiet)
+try
+    img = imread(namestack{1});
+    img = imrotate(img, -rotationCW, 'bilinear', 'crop');
+    img = imcrop(img, [x_corner, y_corner, width - 1, height - 1]);
+    h = figure(); imshow(img,'InitialMagnification','fit')
+    if(~input('Is this the slice you want? (1 Yes / 0 No) '))
+        stack = false;
+        close(h);
+        return;
+    end
+    close(h);
+catch
+end
+end
+
+fprintf('Rotating and cropping ... ');
 % Load the images from the list of names and do the tranformations.
 parfor i = 1:numslices
     img = imread(namestack{i});
