@@ -31,8 +31,8 @@ t.subset_dir = '/media/OCT14M/Segmentations/Chad'; % The directory to put the su
 t.segmented_dir = '/media/OCT14M/Segmentations/lookbook'; % The directory to put the segmented subsets
 
 %t = t.gatherSubsets();
-t = t.setnumdists(3,2);
-%t = t.fitDists();
+%t = t.setnumdists(4);
+t = t.fitDists();
 t = t.segmentSubsets();
 
 % %%

@@ -23,34 +23,35 @@ for i = 1:numdists
     probabilities(:,i) = proportions(i).*thispdf;
 end
 
+% Ask the user to label the distributions
+h = figure();
+peaklabels = ones(numdists,1,'uint8')*2;
+newprobs = zeros(length(range),4);
+for i = 1:numdists
+    figure(h); hold on;
+    plot(range,probabilities(:,:),'k'); 
+    plot(range,probabilities(:,i),'r');
+    hold off;
+    acceptable = false;
+    while ~acceptable
+        peaklabels(i) = input('Label this peak: (1-Void, 2-Wood, 3-Mix, 4-Adhesive) ');
+        if(peaklabels(i) > 0 && peaklabels(i) < 5)
+            acceptable = true;
+        end
+    end
+    newprobs(:,peaklabels(i)) = max([newprobs(:,peaklabels(i))';probabilities(:,i)'])';
+end
+close(h);
+numdists = numel(unique(peaklabels));
+probabilities = newprobs;
+
 % For each of the numbers in the range find the most probable label.
 [~,labels] = max(probabilities,[],2);
 labels = uint8(labels);
 
-% TODO: Figure out a way to better sort the distributions.  
-% Finds the center of each group in the vector LABEL.
-centroids(numdists,2) = double(0);
-centroids(:,2) = (1:numdists)';
-for j = 1:numdists
-    points = find(labels == j);
-    centroids(j,1) = mean(points);
-end
-
-% Sort the distributions by the centroid of their most probable region.
-probabilities = sortrows([centroids(:,1),probabilities'], 1);
-probabilities = probabilities(:,2:end)';
-
-centroids = sortrows(centroids,1);
-centroids(:,1) = (1:numdists)';
-centroids = sortrows(centroids,2);
-sorter = centroids(:,1);
-labels = sorter(labels);
-
-assert(numel(unique(labels)) == numdists);
-
 % Fix any non-contiguous label assignments buy reassigning them to their
 % next most probable distribution.
-[labels,~] = checklabels(labels,probabilities,0,length(labels));
+[labels,~] = checklabels(labels,probabilities,0,0);
 
 %% Add a fifth phase -----------------------------------------------------
 % The final output should always have 4 groups: 1-background, 2-wood, 
@@ -65,12 +66,12 @@ if(numdists < 2 || numdists > 5)
     error('numdists cannot be: %i', numdists);
 end
               
-% numdists = 2,3,4: insert 3-mix
-if numdists < 5
-    higroup = numdists;
-    logroup = higroup -1;
+% numdists = 2,3: insert 3-mix
+if numdists < 4
+    higroup = 4;
+    logroup = 2;
 
-    warning('numdists is 3 or 4. An additional phase between last groups +/- %g will be created.',BUFFER);
+    warning('numdists is less than 4. An additional phase between last groups +/- %g will be created.',BUFFER);
     % Find where the 4th and 3rd group intersect. We have to check from the
     % right because checklabels still doesn't do it's job.
     right = length(labels);
@@ -89,28 +90,28 @@ if numdists < 5
     end
 
     % Relabel the region.
-    labels(left+1:right-1) = higroup;
-    labels(right:end) = higroup+1;
+    labels(left+1:right-1) = 3;
+    labels(right:end) = 4;
     numdists = numdists + 1;
 end
 
 % numdists = 3: Add 1-background
 if numdists == 3
     warning('numdists is 2. An additional phase at 0 will be created.');
-    labels = labels+1;
     labels(1) = 1;
     numdists = numel(unique(labels));
 end
 
-% numdists = 5: merge groups 1 and 2
-if numdists == 5
-    
-    labels = labels - 1;
-    labels = labels + double(labels == 0);
-        
-    numdists = numel(unique(labels));
-end
-        
+% % numdists = 5: merge groups 1 and 2
+% if numdists == 5
+%     
+%     labels = labels - 1;
+%     labels = labels + double(labels == 0);
+%         
+%     numdists = numel(unique(labels));
+% end
+
+plot(labels);
 assert(numdists == 4);
 end
 

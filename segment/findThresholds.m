@@ -23,20 +23,20 @@ MAXITER = 800; % Maxium iterations for EM fitting of gaussians
 TERMCRIT = 1e-7;
 REPS = 3; % Number of times to attempt EM fitting of guassians
 MAXINT = 2^bitdepth - 1;
-UPPERTHRESH = MAXINT;
+UPPERTHRESH = MAXINT+1;
 LOWERTHRESH = 0;
 sample = double(sample(:));
 
 COLORORDER = false;
-switch numdists
+switch 4
     case 2
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 1 0;0 0 1];
     case 3
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 1 0;0 0 1];
-    case 4
+    case 0
         COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 1 0;0 0 1];
-    case 5
-        COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 0 0;0 1 0;1 0 0;0 0 1];
+    case 4
+        COLORORDER = [0 0 0;0.2 0.2 0.2;0 0 0;0 1 0;1 0 0;0 0 1];
 end
 
 % Peaks at the edges of the space hinder fitgmdist in doing its job, so 
@@ -47,6 +47,32 @@ fprintf( logfile, 'NUMBER OF POINTS IS %i \n', length(sample));
 if(length(sample) < 10000)
     error('Data sample has no length. Maybe the threshold is too high.');
 end
+% Trim last peak of the histogram
+g = figure(2); h = histogram(sample, MAXINT);
+[firstheight, h1] = max(h.Values);
+if h1 == length(h.Values)
+    secondheight = max(h.Values(1:end-1));
+
+    sample = sort(sample(:));
+    clip = firstheight - secondheight;
+    sample = double(sample(1:end-clip));
+
+    append = 1:floor(clip/secondheight);
+    append = repmat(append,secondheight,1);
+    append = append + max(sample);
+    sample = cat(1,sample,append(:));
+    MAXINT = max(append(:));
+    figure(g);h = histogram(sample, MAXINT);
+end
+%TODO: Figure out a better way to put another peak beyond the edge of the
+%range.
+%numcols = floor(length(sample)/h.Values(end)/0.001);
+% numcols = 50;
+% append = repmat((1:numcols)+MAXINT,[h.Values(end),1]);
+% sample = cat(1,sample,append(:));
+% MAXINT = max(append(:));
+
+close(g);
 
 %% Fit Guassians to the data ---------------------------------------------
 
@@ -69,6 +95,10 @@ end
 
 % Assign each gray to a group.
 range = 0:MAXINT;
+gaussfig = figure(2);
+% Plot the histogram in the background.
+histogram(sample, max([floor(MAXINT/100);256]),'Normalization','pdf',...
+          'EdgeColor',[0.5 0.5 0.5],'FaceColor',[0.5 0.5 0.5]);
 [labels, separatedpdfs] = getlabels(range',a,s,c);
 
 % Save labels to logfile
@@ -83,14 +113,14 @@ stepfig = figure(1); plot(labels);
 set(groot,'defaultAxesColorOrder',COLORORDER);
 gaussfig = figure(2);
 % Plot the histogram in the background.
-histogram(sample, MAXINT,'Normalization','pdf',...
+histogram(sample, max([floor(MAXINT/100);256]),'Normalization','pdf',...
           'EdgeColor',[0.5 0.5 0.5],'FaceColor',[0.5 0.5 0.5]);
 hold on;
 % Put the gaussian mixture in black on top of that.
 plot(range, pdf(gaussianmix, range'),'LineWidth', 2.0);
 % Plot each gaussian separately as well.
 plot(range, separatedpdfs, 'LineWidth', 2.0);
-axis([0 MAXINT 0 inf]);
+axis([0 MAXINT*1.05 0 inf]);
 hold off;
 
 set(groot,'defaultAxesColorOrder','remove')

@@ -1,13 +1,20 @@
 function [ stack ] = imstackload( directory, type, fraction )
-%imstack Returns a 3D images stack of all images in the directory. Only
+%IMSTACKLOAD Returns a 3D images stack of all images in the directory. Only
 %works for stacks of images whose largest images is listed first. Does not
 %sort directory before loading images.
 
+% version = 1.1.0
+% INPUTS:
+% directory: the folder of images from which the stack will be constructed.
+% type (string): OPTIONAL determines the type of data returned e.g. uint8, 
+%   double, uint16, etc.
+% fraction (optional): Some number in the range (0,1]. The returned stack
+%   will be a randomly selected fraction of the images in directory.
+%% -----------------------------------------------------------------------
 if nargin < 3, fraction = 1; end
-
 kEXTENSION = {'.tif', '.png', '.tiff'};
 
-%loads the names of all the files in the directory
+%% Load the names of all the files in the directory
 fcontents = dir(directory);
 addpath( genpath(directory) );
 fprintf('Loading files from %s ... ', directory);
@@ -31,6 +38,8 @@ if image_count == 0
 end
 clear fcontents;
 
+%% Load the actual file data
+
 if fraction < 1
     numsamples = ceil(fraction*image_count);
     %warning('NUM SAMPLED SLICES IS %i \n', numsamples);
@@ -38,7 +47,23 @@ if fraction < 1
     image_count = numsamples;
 end
 
-%determines the size of the images that will be loaded
+if nargin < 2
+    % Automagically check the bitdepth of the first loaded image and
+    % allocate the appropriate array.
+    info = imfinfo(namestack{1});
+    switch(info.BitDepth)
+        case 8
+            type = 'uint8';
+        case 16
+            type = 'uint16';
+        case 32
+            type = 'single';
+        otherwise
+            type = 'double';
+    end 
+end
+
+% Determines the size of the images that will be loaded
 [m,n,o] = size(imread(namestack{1}));
 
 if o == 1 % the images are not color
