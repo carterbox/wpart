@@ -157,16 +157,19 @@ classdef tomography
             end
         end
 
-        function obj = fitDists(obj)
-            
+        function obj = fitDists(obj, N)            
             % Creating a Log file
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             logfile = fopen([OUTDIR '/log.txt'],'a');
             fprintf(logfile,['\n' datestr(datetime('now')) '\n\n']);
             
             NUMSTACKS = length(obj.projname);
+                
+            if nargin < 2
+                N = 1:NUMSTACKS;
+            end
             
-            for key = 1:NUMSTACKS
+            for key = N
                 addpath(genpath([obj.subset_dir obj.projname{key}]));
                 
                 tryagain = true;
@@ -183,6 +186,7 @@ classdef tomography
                     for slice = 1:size(stack,3)
                         img = stack(:,:,slice);
                         mask = img > 0.88*hi;
+                        mask = bwareaopen(mask, 10);
                         R = 33; H = 4; N = 8;
                         %SE = strel('ball', R, H, N);
                         SE = strel('octagon', R);
@@ -211,7 +215,7 @@ classdef tomography
 
         function obj = segmentSubsets(obj)
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
-            %load([OUTDIR sprintf('/tomography.mat')], 'obj');
+            load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
             %if size(gcp) == 0, p = parpool(4); else p = gcp; end
             NUMSTACKS = length(obj.projname);
@@ -219,25 +223,31 @@ classdef tomography
                 % Load each of the stacks to process them separately
                 stack = imstackload([obj.subset_dir obj.projname{key}]);
                 referenceslice = (stack(:,:,1));
-                
-                output = (rescale(stack, obj.bitdepth, 1, obj.thresh16(key),2^16));
-                imstacksave(output,sprintf('%s/nobackground_%02i',OUTDIR,key),sprintf('%s_%02i',obj.samplename,key));
-                clear output;
 
                 % Segment the image according to the lookup-table.
                 fprintf('Mapping...\n');
+                bwoutput = zeros(size(stack),'uint8');
+                thresh = obj.thresh16(key);
                 z = size(stack,3);
-                for chunk_start = 1:10:z
-                    chunk = stack(:,:,chunk_start:min([chunk_start+10;z]));
+                stride = 100;
+                for chunk_start = 1:stride:z
+                    chunk = stack(:,:,chunk_start:min([chunk_start+stride;z]));
+                    
+                    % BW Remove background images
+                    bwoutput(:,:,chunk_start:min([chunk_start+stride;z])) = rescale(chunk, 8, 1, thresh, 2^16);
+                    
+                    % Color Segmentation
                     chunk = obj.labels{key}(chunk + 1);
                     chunk = removeislands(chunk, 8, 100);
-                    stack(:,:,chunk_start:min([chunk_start+10;z])) = chunk;
+                    stack(:,:,chunk_start:min([chunk_start+stride;z])) = chunk;
                 end
                 stack = uint8(stack);
+                imstacksave(bwoutput,sprintf('%s/nobackground_%02i',OUTDIR,key),sprintf('%s_%02i',obj.samplename,key));
+                clear bwoutput;
                 
                 fprintf('Coloring...\n');
-                output = woodcolor('c', stack, 4, logfile, 1, referenceslice);
-                imstacksave(output,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
+                coutput = woodcolor('c', stack, 4, logfile, 1, referenceslice);
+                imstacksave(coutput,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
                 print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
                 
                 clear stack;
