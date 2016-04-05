@@ -50,7 +50,7 @@ end
 assert(x_corner >= 0 && x_corner < m);
 assert(y_corner >= 0 && y_corner < n);
 
-if(~runquiet)
+if(~runquiet && usejava('awt'))
 try
     img = imread(namestack{z0+1});
     img = imrotate(img, -rotationCW, 'bilinear', 'crop');
