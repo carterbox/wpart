@@ -4,9 +4,9 @@ classdef tomography
 %   segmentSubsets AND three functions that help set the properties of the
 %   object: the default constructor, setnumdists, and setprojname.
 
-% version 1.0.0 
+% version 2.0.0 
 
-% tomography(height,width,depth,samplename)
+% tomography(width,height,depth,samplename)
 
 % SETNUMDISTS(N) Allows for 1 or 0 inputs. If 0 inputs are given, it will 
 % draw a histogram for the data at recond_dir/projname{1} and prompt the user
@@ -18,8 +18,8 @@ classdef tomography
 % '/sample_2', '/sample_9'}.
 
 % GATHERSUBSETS(quiet) Collects volumes from recon_dir/projname and crops out 
-% a subset according to rotationCW, x0, y0, bottom, height, width, and 
-% depth. It saves the subset in the subset_dir/projname. OPTIONAL add quiet
+% a subset according to rotationCW, x0, y0, z0, height, width, and 
+% depth. It saves the subset in the subset_dir/samplename/projname. OPTIONAL add quiet
 % = true as an optional parameter to skip prompt to inspect slice before
 % saving.
 
@@ -36,13 +36,16 @@ classdef tomography
 % No_background removes phase 1 and rescale the original greyscale image to
 % cover the entire grey range.
 
+% version 2.0.0 - changed order in which width, height, depth are listed
+% and changed the subset specification parameters.
+
 %% -----------------------------------------------------------------------
     properties
         % Properties related to cropping a subset
         rotationCW = []; % Clockwise rotation applied before cropping
         x0 = []; % Coordinates of the subset closest to the min corner
         y0 = [];
-        bottom = []; % Location of bottom slice
+        z0 = [];
         
         % subset dimensions
         height;
@@ -63,7 +66,7 @@ classdef tomography
     
     methods
 %% Default Constructor
-        function obj = tomography(height,width,depth,samplename)
+        function obj = tomography(width,height,depth,samplename)
             obj.width = width;
             obj.height = height;
             obj.depth = depth;
@@ -127,7 +130,7 @@ classdef tomography
             for i = 1:numel(obj.projname)
                 
                 % Creating a working directories
-                outdir = [obj.subset_dir obj.projname{i}];
+                outdir = [obj.subset_dir obj.samplename obj.projname{i}];
                 indir = [obj.recon_dir obj.projname{i}];
                 mkdir(outdir); addpath(genpath(indir));
                 
@@ -135,12 +138,11 @@ classdef tomography
                 logfile = fopen( [outdir '/log.txt'], 'w' );
                 fprintf(logfile, '%s\n\n', indir );
                 fprintf(logfile, 'CW Rotation: %.1f\n',obj.rotationCW(i) );
-                fprintf(logfile, 'x0: %i  y0: %i\n', obj.x0(i), obj.y0(i) );
-                fprintf(logfile, 'width: %i  height: %i\n', obj.width, obj.height);
-                fprintf(logfile, 'notch: %i ', obj.bottom(i) );
+                fprintf(logfile, 'x0: %i  y0: %i z0: %i\n', obj.x0(i), obj.y0(i), obj.z0(i) );
+                fprintf(logfile, 'width: %i  height: %i depth: %i\n', obj.width, obj.height, obj.depth);
 
                 % Loading rotating cropping and scaling
-                stack = makeSubset( indir, obj.rotationCW(i), obj.x0(i), obj.y0(i), obj.width, obj.height, obj.depth, obj.bottom(i), runquiet);
+                stack = makeSubset( indir, obj.rotationCW(i), obj.x0(i), obj.y0(i), obj.z0(i), obj.width, obj.height, obj.depth, runquiet);
                 if(stack == false)
                     error('Didn''t crop the correct subsection.');
                 end
@@ -170,14 +172,14 @@ classdef tomography
             end
             
             for key = N
-                addpath(genpath([obj.subset_dir obj.projname{key}]));
+                addpath(genpath([obj.subset_dir obj.subset_dir obj.projname{key}]));
                 
                 tryagain = true;
                 while tryagain
                     fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
                     
                     % Sample 2 percent of the data to reduce memory and processing consumption.
-                    stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16', 0.0025);
+                    stack = imstackload([obj.subset_dir obj.subset_dir obj.projname{key}], 'uint16', 0.0025);
                     hi = max(stack(:));
 
                     %Mask out areas not adjacent to adhesive in order to
@@ -230,23 +232,24 @@ classdef tomography
                 thresh = obj.thresh16(key);
                 z = size(stack,3);
                 stride = 100;
+                
+                parfor chunk_start = 1:z
+                    % BW Remove background images
+                    bwoutput(:,:,chunk_start) = rescale(stack(:,:,chunk_start), 8, 1, thresh, 2^16);
+                end
+                imstacksave(bwoutput,sprintf('%s/nobackground_%02i',OUTDIR,key),sprintf('%s_%02i',obj.samplename,key));
+                clear bwoutput;
+                
                 for chunk_start = 1:stride:z
                     chunk = stack(:,:,chunk_start:min([chunk_start+stride;z]));
-                    
-                    % BW Remove background images
-                    bwoutput(:,:,chunk_start:min([chunk_start+stride;z])) = rescale(chunk, 8, 1, thresh, 2^16);
-                    
                     % Color Segmentation
                     chunk = obj.labels{key}(chunk + 1);
                     chunk = removeislands(chunk, 8, 100);
                     stack(:,:,chunk_start:min([chunk_start+stride;z])) = chunk;
                 end
-                stack = uint8(stack);
-                imstacksave(bwoutput,sprintf('%s/nobackground_%02i',OUTDIR,key),sprintf('%s_%02i',obj.samplename,key));
-                clear bwoutput;
                 
                 fprintf('Coloring...\n');
-                coutput = woodcolor('c', stack, 4, logfile, 1, referenceslice);
+                coutput = woodcolor('c', uint8(stack), 4, logfile, 1, referenceslice);
                 imstacksave(coutput,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
                 print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
                 
