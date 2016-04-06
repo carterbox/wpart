@@ -237,7 +237,7 @@ classdef tomography
                     % BW Remove background images
                     bwoutput(:,:,chunk_start) = rescale(stack(:,:,chunk_start), 8, 1, thresh, 2^16);
                 end
-                imstacksave(bwoutput,sprintf('%s/nobackground_%02i',OUTDIR,key),sprintf('%s_%02i',obj.samplename,key));
+                imstacksave(bwoutput,OUTDIR,sprintf('%s_%02i',obj.samplename,key),'raw');
                 clear bwoutput;
                 
                 for chunk_start = 1:stride:z
