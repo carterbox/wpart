@@ -1,105 +1,114 @@
-function [strain3Dgrey] = mapToColor( strain3D, originals, spacing, samplename)
-%takes a cell of 3D matricies and creates colorized images
-RGBmap = colormap(jet(256));
-
+function [colorImage] = mapToColor(Function, Images, lo, hi)
+%MAPTOCOLOR takes a 3D Function and overlays it on stack of images.
+%
+%version 2.1.0
+%INPUTS
+% Function (double): a Nx4 matrix where the first three columns are
+% coordinates and the last column is the function values at those
+% coordinates. Must be a regular grid in each dimension. e.g. spacing can
+% differ between dimensions, but there cannot be holes in the data.
+%
+% Images (matrix or cell): images (grey or color) that create a 3D 
+% volume in which Function can be mapped. If numel(Images) < 2, MAPTOCOLOR
+% will return only the colormapped function.
+%
+%OUTPUTS
+% colorImage: a cell of 8 bit color image slices.
+%
+% version 2.1.0 - Added option of supplying no Images.
+RGBmap = cool(256); % Chooses the function mapping from numbers to colors
+logfile = 1;
+%% -----------------------------------------------------------------------
 closeit = 0;
-if(matlabpool('size') == 0)
-    matlabpool open;
-    closeit = 1;
-end
+if(numel(gcp) == 0)
+    closeit  = parpool;
+end 
 
-n = length(strain3D);
-assert(length(spacing) == 3, 'Spacing must be vector with 3 entries');
+%% GET INFORMATION ABOUT VOLUMES
+Isize = size(Images);
+assert(size(Function,2) == 4, 'Function must be 4 columns');
 
-%choose a colorscheme, convert the strain map to 256 values, and
-%interpolate the strain map up to the approximate size of the original
-factor = floor(spacing./2-1);
-display(sprintf('Interpolating strain map by factor of [%i, %i, %i]', factor(1), factor(2), factor(3)));
-for i = 1:n 
-    assert(length(size(strain3D{i})) == 3, 'Strain data must be 3D');
-    strain3D{i} = matchsize(interp3(strain3D{i}, factor , 'spline'), originals{i});
-end
+Function = double(sortrows(Function,[3,2,1]));
+a = numel(unique(Function(:,1)));
+b = numel(unique(Function(:,2)));
+c = numel(unique(Function(:,3)));
 
-display('Normalizing values to 256 shades...');
-strain3Dgrey = mapTo256(strain3D);
+fmin = ceil(min(Function(:,1:3),[],1));
+fmax = floor(max(Function(:,1:3),[],1));
 
-for i = 1:n
-    orig = originals{i};
-    grey = strain3Dgrey{i};
-    [~,~,z] = size(grey);
-    %create containers for color image stack
-    colorImage = cell(1,z);
-    colorStrain = cell(1,z);
+%% RESCALE FUNCTION INTO 256 COLORS
+fprintf(logfile,'Normalizing values to 256 shades...');
+Function(:,4) = rescale(Function(:,4),8,logfile, lo, hi);
+fprintf(logfile,'DONE.\n');
 
-    %convert both the strain map and original to color images
-    parfor k = 1:z
-        colorImage{k} = label2rgb(orig(:,:,k),colormap(gray(256)));
-        colorStrain{k} = label2rgb(grey(:,:,k),RGBmap);
-    end
+%% INTERPOLATE FUNCTION INTO SLICES
 
-    %blend the colored strain map into the original image
-    display('Blending images.');
-    parfor k = 1:z
-       colorImage{k} = imfuse(colorImage{k}, colorStrain{k}, 'blend');
-    end
+% Reshape the data into an ND matrix because interpn wants it that way.
+Fx = reshape(Function(:,1),a,b,c);
+Fy = reshape(Function(:,2),a,b,c);
+Fz = reshape(Function(:,3),a,b,c);
+Ff = reshape(Function(:,4),a,b,c);
+clear Function a b c
 
-    %save the stack of processed images
-    display(sprintf('Saving Images for stack %i', i));
-    mkdir(sprintf('./results%02i',i));
-    parfor k = 1:z
-        filename = sprintf('./results%02i/%s%03i.bmp',i,samplename,k); 
-        imwrite(colorImage{k},filename,'bmp');
-    end
-    %imshow(colorImage{16});
-    %out = colorImage;
-end
+% Create a query grid for each output slice.
+[Qx,Qy,Qz] = ndgrid(fmin(1):fmax(1),fmin(2):fmax(2), 1);
 
-if(closeit == 1); matlabpool close; end
-display('done');
-end
-
-function [A] = matchsize(A, B)
-%Changes the size of A to match the size of B. Throws an exception if the
-%dimensionality of the two matricies are not the same. Only supports up to
-%3 dimensions.
-
-    b = size(B);
-    a = size(A);
-    dimensions = length(a);
-    assert(dimensions == length(b));
+%pre_pad = fmin-1; post_pad = Isize-fmax;
+F = zeros(size(Qx,1),size(Qx,2),fmax(3)-fmin(3)+1,'uint8');
+fprintf(logfile,'Interpolating function to slices...');
+parfor i = 1:(fmax(3)-fmin(3)+1)
+    slice = i+fmin(3)-1;
     
-    for i = 1:dimensions
-        %if the dx > 0 then A has to get bigger and vise versa
-        dx = b(i)-a(i);
-        %display(dx);
-        
-        if(dx > 0) %pad a with replicated values
-            padding = zeros(1,dimensions);
-            padding(i) = floor(dx/2);
-            A = padarray(A, padding,'replicate');
-            if(mod(dx,2) == 1) %for odd numbers
-                padding(i) = 1;
-                A = padarray(A, padding, 'replicate', 'pre');
-            end
-        end
-        
-        if(dx < 0) %take a subset of A
-            padding = zeros(1,dimensions);
-            padding(i) = ceil(dx/2);
-            start = ones(1,dimensions) - padding;
-            stop = size(A) + padding;
-            if(mod(dx,2) == 1) %for odd numbers
-                padding(i) = 1;
-                start = start + padding;
-            end
-            A = A(start(1):stop(1),start(2):stop(2),start(3):stop(3));
-        end
-        
-    end
+    % Interpolate all the values of the function to 1 pixel spacing 
+    Qf = interpn(Fx,Fy,Fz,Ff,Qx,Qy,Qz.*slice,'cubic');
+    
+    % Padd the results to fit on top of Image
+    %Qf = padarray(Qf,pre_pad(1:2),'pre');
+    F(:,:,i) = Qf; %padarray(Qf,post_pad(1:2),'post');
+end
+fprintf(logfile,' DONE.\n');
+clear a b c pre_pad post_pad Fx Fy Fz Ff Qx Qy Qz Qf
 
-    [a1,a2,a3] = size(A);
-    [b1,b2,b3] = size(B);
-    %display(size(A));
-    %display(size(B));
-    assert(a1==b1 && a2==b2 && a3==b3);
+%% COMBINE VOLUMES
+if numel(Images < 2)
+    colorImage = cell(size(F,3),1);
+    parfor slice = 1:size(F,3)
+        colorImage{slice} = label2rgb(F(:,:,slice),RGBmap,'k');
+    end
+else
+    % Create container for color image stack
+    colorImage = cell(Isize(3),1);
+    %colorStrain = zeros(Isize(1:2));
+
+    sXWorldLimits = [fmin(2),fmax(2)];
+    sYWorldLimits = [fmin(1),fmax(1)];
+    RefF = imref2d(size(F(:,:,1)),sXWorldLimits,sYWorldLimits);
+
+    RefImage = imref2d(size(Images(:,:,1)));
+
+    fprintf(logfile,'Merging colors...');
+    parfor slice = 1:Isize(3)
+
+        orig = Images(:,:,slice);
+
+        %convert both the strain map and original to color images
+        colorImage{slice} = label2rgb(orig+1,gray(256));
+
+        if fmin(3) <= slice && slice <= fmax(3) % The range where F is valid
+            colorStrain = label2rgb(F(:,:,slice-fmin(3)+1),RGBmap,'k');
+
+            % Blend the colored strain map into the original image
+            colorImage{slice} = imfuse(colorImage{slice}, RefImage, colorStrain, RefF, 'blend', 'Scaling','none');
+        end
+    end
+    fprintf(logfile,' DONE.\n');
+    clear colorStrain
+end
+
+%% SAVE IMAGES
+
+%imstacksave(colorImage, './colortest','/gauss');
+
+if(closeit ~= 0); delete(gcp); end
+display('done');
 end

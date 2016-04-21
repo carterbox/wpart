@@ -1,11 +1,11 @@
-function [namestack, count] = imnamestack(directory, notch, depth)
-%IMNAMESTACK returns the names all images in the directory.
+function [namestack, count] = imnamestack(directory, depth)
+%IMNAMESTACK returns the names of all images in the directory.
 %   Does not sort directory before loading image names.
 %
+% version 2.0.0
 % INPUTS
 %   directory: the folder where the images are located.
-%   notch: the index of the last image in the stack.
-%   depth: the number of names before NOTCH to be loaded.
+%   depth: the total number of names to be loaded.
 %
 % OUTPUT
 %   namestack (cell): list of filenames.
@@ -29,12 +29,11 @@ if exist(directory,'dir')
     end
 
     % Preallocate a cell for the names.
-    namestack = cell(depth,1);
+    namestack = cell(min(depth,length(fcontents)+1-start),1);
 
     % Loads all the names into the cell.
     count = 0;
-    stop = min((start + notch - 16), length(fcontents));
-    start = max(start, start + (notch - 15 - depth));
+    stop = min((start + depth - 1), length(fcontents));
     for i = start:stop
         % Check that the entry is not a directory.
         if(~fcontents(i).isdir)
@@ -48,7 +47,7 @@ if exist(directory,'dir')
     end
     fprintf('LOADED %i NAMES\n', count);
 
-    if(count ~= depth)
+    if(depth ~= inf && count ~= depth)
         warning('Matrix size does not match desired depth.');
         namestack = namestack(1:count);
     end
