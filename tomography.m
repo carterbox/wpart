@@ -80,11 +80,11 @@ classdef tomography
                obj.numdists(1) = varargin{1};
            else
                key = 1;
-               if ~isempty(obj.projname) && exist([obj.subset_dir obj.projname{key}],'dir')
+               if ~isempty(obj.projname) && exist([obj.subset_dir obj.samplename obj.projname{key}],'dir')
                    
-                   addpath(genpath([obj.subset_dir obj.projname{key}]));
+                   addpath(genpath([obj.subset_dir obj.samplename obj.projname{key}]));
                    
-                   stack = imstackload([obj.subset_dir obj.projname{key}], 'uint16', 0.02);
+                   stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}], 'uint16', 0.02);
                                  
                    h = figure(1);
                    stack = removex(stack(:),2^16-1,1);
@@ -172,14 +172,14 @@ classdef tomography
             end
             
             for key = N
-                addpath(genpath([obj.subset_dir obj.subset_dir obj.projname{key}]));
+                addpath(genpath([obj.subset_dir obj.samplename obj.projname{key}]));
                 
                 tryagain = true;
                 while tryagain
                     fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
                     
                     % Sample 2 percent of the data to reduce memory and processing consumption.
-                    stack = imstackload([obj.subset_dir obj.subset_dir obj.projname{key}], 'uint16', 0.0025);
+                    stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}], 'uint16', 0.0025);
                     hi = max(stack(:));
 
                     %Mask out areas not adjacent to adhesive in order to
@@ -223,7 +223,7 @@ classdef tomography
             NUMSTACKS = length(obj.projname);
             for key = 1:NUMSTACKS
                 % Load each of the stacks to process them separately
-                stack = imstackload([obj.subset_dir obj.projname{key}]);
+                stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}]);
                 referenceslice = (stack(:,:,1));
 
                 % Segment the image according to the lookup-table.

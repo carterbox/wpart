@@ -11,8 +11,8 @@ function [EP, WP] = calc_penetration(volume, points)
 % EP (double) Effective Penetration: A surface density; the average mass
 % per unit bondline.
 % WP (double) Weighted Penetration: Similar to the second moment of area;
-% accounts for both mass and perpendicular distance. Masses farther away 
-% from the bondline count more. 
+% accounts for both mass and perpendicular distance. Masses farther away
+% from the bondline count more.
 %
 %% TEST CASE
 
@@ -26,7 +26,7 @@ function [EP, WP] = calc_penetration(volume, points)
 
 h = figure(1); clf(h); hold on; daspect([1 1 1]);
 % plot the points
-scatter3(points(:,1),points(:,2),points(:,3)); 
+scatter3(points(:,1),points(:,2),points(:,3));
 % plot a marker on plane and normal vector
 plot3(point(1),point(2),point(3),'ro','markersize',15,...
       'markerfacecolor','red');
@@ -50,14 +50,14 @@ function EP = effective_penetration(volume,normal,point)
 % component. Otherwise, this calculated area will be infinite.
 if(normal(3) == 0), error('The bondline is too straight.' + ...
                           ' Caclulated area is infinite!'); end
-                  
+
 %z = @(x,y) (dot(normal,point) - (normal(1)*x + normal(2)*y)) / normal(3);
 %area = integral2(z,0,1,0,1);
 [xmax,ymax,~] = size(volume);
 area = sqrt((-normal(1)/normal(3)).^2 + (-normal(1)/normal(3)).^2 + 1) ...
        * (xmax - 1) * (ymax - 1);
 
-% Literally, take the sum of the number of adhesive voxels (volume) 
+% Literally, take the sum of the number of adhesive voxels (volume)
 % and divide by the area of the bondline (area).
 EP = sum(volume(:))/area;
 
@@ -68,7 +68,7 @@ function WP = weighted_penetration(volume,normal,point)
 % line defined by a normal and a point.
 
     WP = 0;
-    
+
     for i = 1:numel(volume)
     if(volume(i))
         [x,y,z] = ind2sub(size(volume),i);
@@ -78,7 +78,7 @@ function WP = weighted_penetration(volume,normal,point)
     end
 
     WP = sqrt(WP/sum(volume(:)));
- 
+
 end
 
 function d = plane_to_point(normal,A,B)
