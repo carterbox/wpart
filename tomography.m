@@ -4,7 +4,7 @@ classdef tomography
 %   segmentSubsets AND three functions that help set the properties of the
 %   object: the default constructor, setnumdists, and setprojname.
 
-% version 2.0.0 
+% version 2.1.0 
 
 % tomography(width,height,depth,samplename)
 
@@ -35,6 +35,11 @@ classdef tomography
 % assigns each of the four phases to an red, green, blue, or black.
 % No_background removes phase 1 and rescale the original greyscale image to
 % cover the entire grey range.
+
+% PENETRATIONSTATS(bondline_file) Calculates the effective penetration (EP)
+% and weighted penetration (WP) of the bondline from the segmented volume 
+% and a CSV file containing points marking the bondline. The result is put 
+% in the log file.
 
 % version 2.0.0 - changed order in which width, height, depth are listed
 % and changed the subset specification parameters.
@@ -258,7 +263,27 @@ classdef tomography
             fprintf(logfile,'\n');
             fclose(logfile); close all;
         end    
-    end
+        
+        function obj = penetrationStats(obj, bondline_file)
+            OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
+            %load([OUTDIR sprintf('/tomography.mat')], 'obj');
+            logfile = fopen([OUTDIR '/log.txt'],'a');
+            %if size(gcp) == 0, p = parpool(4); else p = gcp; end
+            key = 1; % Only need bondline stats for the first step
+            
+            color = imstackload(sprintf('%s/color_%02i',OUTDIR,key));
+
+            binary = false(size(color{1},1), size(color{1},2), numel(color));
+            for i = 1:numel(color)
+               binary(:,:,i) = color{i}(:,:,1) > 0 & color{i}(:,:,3) > 0; 
+            end
+
+            bondline = importdata(bondline_file);
+            bondline = bondline.data;
+            [EP, WP] = calc_penetration(binary, bondline);
+            fprintf(logfile, ['\nEffective Penetration: %f' ...
+                              '\n Weighted Penetration: %f'], EP, WP);
+        end
 end
 
 function A = removex(A,hi,lo)
