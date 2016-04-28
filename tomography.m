@@ -284,6 +284,7 @@ classdef tomography
             fprintf(logfile, ['\nEffective Penetration: %f' ...
                               '\n Weighted Penetration: %f'], EP, WP);
         end
+    end
 end
 
 function A = removex(A,hi,lo)
