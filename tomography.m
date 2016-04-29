@@ -283,7 +283,7 @@ classdef tomography
 
             binary = false(size(color{1},1), size(color{1},2), numel(color));
             for i = 1:numel(color)
-               binary(:,:,i) = color{i}(:,:,1) > 0 & color{i}(:,:,3) > 0; 
+               binary(:,:,i) = color{i}(:,:,1) > 0 | color{i}(:,:,3) > 0; 
             end
 
             bondline = importdata(bondline_file);
@@ -292,6 +292,7 @@ classdef tomography
             fprintf(logfile, ['\nEffective Penetration: %f' ...
                               '\n Weighted Penetration: %f'], EP, WP);
         end
+    end
 end
 
 function A = removex(A,hi,lo)
