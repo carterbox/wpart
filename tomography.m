@@ -59,7 +59,7 @@ classdef tomography
         
         bitdepth = 16; % The desired working bitdepth
         numdists = [4];
-        thresh16;
+        thresh16 = [3*10^4];
         labels = {};
         
         samplename = ''; % The name of the a group of projects
@@ -170,6 +170,8 @@ classdef tomography
             logfile = fopen([OUTDIR '/log.txt'],'a');
             fprintf(logfile,['\n' datestr(datetime('now')) '\n\n']);
             
+            if usejava('awt')
+            
             NUMSTACKS = length(obj.projname);
                 
             if nargin < 2
@@ -217,6 +219,7 @@ classdef tomography
                     close all;
                 end
             end
+            end
             save([OUTDIR sprintf('/tomography.mat')], 'obj');
         end
 
@@ -234,7 +237,11 @@ classdef tomography
                 % Segment the image according to the lookup-table.
                 fprintf('Mapping...\n');
                 bwoutput = zeros(size(stack),'uint8');
-                thresh = obj.thresh16(key);
+                if key > numel(obj.thresh16)
+                    thresh = obj.thresh16(1);
+                else
+                    thresh = obj.thresh16(key);
+                end
                 z = size(stack,3);
                 stride = 100;
                 
@@ -242,9 +249,10 @@ classdef tomography
                     % BW Remove background images
                     bwoutput(:,:,chunk_start) = rescale(stack(:,:,chunk_start), 8, 1, thresh, 2^16);
                 end
-                imstacksave(bwoutput,sprintf('%s/nobackground_%02i',OUTDIR,key),sprintf('%s_%02i',obj.samplename,key));
+                imstacksave(bwoutput,OUTDIR,sprintf('%s_%02i',obj.samplename,key),'raw');
                 clear bwoutput;
                 
+                if ~isempty(obj.labels)
                 for chunk_start = 1:stride:z
                     chunk = stack(:,:,chunk_start:min([chunk_start+stride;z]));
                     % Color Segmentation
@@ -257,7 +265,7 @@ classdef tomography
                 coutput = woodcolor('c', uint8(stack), 4, logfile, 1, referenceslice);
                 imstacksave(coutput,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
                 print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
-                
+                end
                 clear stack;
             end
             fprintf(logfile,'\n');
@@ -275,7 +283,7 @@ classdef tomography
 
             binary = false(size(color{1},1), size(color{1},2), numel(color));
             for i = 1:numel(color)
-               binary(:,:,i) = color{i}(:,:,1) > 0 & color{i}(:,:,3) > 0; 
+               binary(:,:,i) = color{i}(:,:,1) > 0 | color{i}(:,:,3) > 0; 
             end
 
             bondline = importdata(bondline_file);

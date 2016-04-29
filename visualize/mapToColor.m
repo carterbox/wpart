@@ -1,7 +1,7 @@
 function [colorImage] = mapToColor(Function, Images, lo, hi)
 %MAPTOCOLOR takes a 3D Function and overlays it on stack of images.
 %
-%version 2.1.0
+%version 2.1.2
 %INPUTS
 % Function (double): a Nx4 matrix where the first three columns are
 % coordinates and the last column is the function values at those
@@ -15,7 +15,8 @@ function [colorImage] = mapToColor(Function, Images, lo, hi)
 %OUTPUTS
 % colorImage: a cell of 8 bit color image slices.
 %
-% version 2.1.0 - Added option of supplying no Images.
+% version 2.1.2 - Fixed bug where worldLimits caused incorrect size of
+% fused image.
 RGBmap = cool(256); % Chooses the function mapping from numbers to colors
 logfile = 1;
 %% -----------------------------------------------------------------------
@@ -70,7 +71,7 @@ fprintf(logfile,' DONE.\n');
 clear a b c pre_pad post_pad Fx Fy Fz Ff Qx Qy Qz Qf
 
 %% COMBINE VOLUMES
-if numel(Images < 2)
+if numel(Images) < 2 % Image is not a volume
     colorImage = cell(size(F,3),1);
     parfor slice = 1:size(F,3)
         colorImage{slice} = label2rgb(F(:,:,slice),RGBmap,'k');
@@ -80,11 +81,11 @@ else
     colorImage = cell(Isize(3),1);
     %colorStrain = zeros(Isize(1:2));
 
-    sXWorldLimits = [fmin(2),fmax(2)];
-    sYWorldLimits = [fmin(1),fmax(1)];
+    sXWorldLimits = [fmin(2),fmax(2)+1];
+    sYWorldLimits = [fmin(1),fmax(1)+1];
     RefF = imref2d(size(F(:,:,1)),sXWorldLimits,sYWorldLimits);
 
-    RefImage = imref2d(size(Images(:,:,1)));
+    RefImage = imref2d(size(Images(:,:,1)),[0,size(Images(:,:,1),2)],[0,size(Images(:,:,1),1)]);
 
     fprintf(logfile,'Merging colors...');
     parfor slice = 1:Isize(3)
@@ -100,6 +101,8 @@ else
             % Blend the colored strain map into the original image
             colorImage{slice} = imfuse(colorImage{slice}, RefImage, colorStrain, RefF, 'blend', 'Scaling','none');
         end
+        colorImage{slice} = permute(colorImage{slice},[2,1,3]);
+        %size(colorImage{slice})
     end
     fprintf(logfile,' DONE.\n');
     clear colorStrain
