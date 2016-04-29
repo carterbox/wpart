@@ -54,7 +54,7 @@ classdef tomography
         
         bitdepth = 16; % The desired working bitdepth
         numdists = [4];
-        thresh16;
+        thresh16 = [3*10^4];
         labels = {};
         
         samplename = ''; % The name of the a group of projects
@@ -165,6 +165,8 @@ classdef tomography
             logfile = fopen([OUTDIR '/log.txt'],'a');
             fprintf(logfile,['\n' datestr(datetime('now')) '\n\n']);
             
+            if usejava('awt')
+            
             NUMSTACKS = length(obj.projname);
                 
             if nargin < 2
@@ -179,7 +181,7 @@ classdef tomography
                     fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
                     
                     % Sample 2 percent of the data to reduce memory and processing consumption.
-                    stack = imstackload([obj.subset_dir obj.subset_dir obj.projname{key}], 'uint16', 0.0025);
+                    stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}], 'uint16', 0.0025);
                     hi = max(stack(:));
 
                     %Mask out areas not adjacent to adhesive in order to
@@ -212,6 +214,7 @@ classdef tomography
                     close all;
                 end
             end
+            end
             save([OUTDIR sprintf('/tomography.mat')], 'obj');
         end
 
@@ -223,13 +226,17 @@ classdef tomography
             NUMSTACKS = length(obj.projname);
             for key = 1:NUMSTACKS
                 % Load each of the stacks to process them separately
-                stack = imstackload([obj.subset_dir obj.projname{key}]);
+                stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}]);
                 referenceslice = (stack(:,:,1));
 
                 % Segment the image according to the lookup-table.
                 fprintf('Mapping...\n');
                 bwoutput = zeros(size(stack),'uint8');
-                thresh = obj.thresh16(key);
+                if key > numel(obj.thresh16)
+                    thresh = obj.thresh16(1);
+                else
+                    thresh = obj.thresh16(key);
+                end
                 z = size(stack,3);
                 stride = 100;
                 
@@ -240,6 +247,7 @@ classdef tomography
                 imstacksave(bwoutput,OUTDIR,sprintf('%s_%02i',obj.samplename,key),'raw');
                 clear bwoutput;
                 
+                if ~isempty(obj.labels)
                 for chunk_start = 1:stride:z
                     chunk = stack(:,:,chunk_start:min([chunk_start+stride;z]));
                     % Color Segmentation
@@ -252,7 +260,7 @@ classdef tomography
                 coutput = woodcolor('c', uint8(stack), 4, logfile, 1, referenceslice);
                 imstacksave(coutput,sprintf('%s/color_%02i',OUTDIR,key),obj.samplename);
                 print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
-                
+                end
                 clear stack;
             end
             fprintf(logfile,'\n');
