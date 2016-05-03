@@ -3,7 +3,7 @@ function stack = rescale(stack, bitdepth, logfile, lowerthresh, upperthresh)
 %   Values are scaled so the largest value become maxint of BITDEPTH and the
 %   smallest value becomes minint of BITDEPTH.
 %
-% version 1.1.1
+% version 1.1.2
 % INPUTS
 %   stack: an image stack to be converted
 %   bitdepth (double): the number of bits to fit the data into.
@@ -14,6 +14,7 @@ function stack = rescale(stack, bitdepth, logfile, lowerthresh, upperthresh)
 % OUTPUTS
 %   stack (bitdepth): the rescaled stack
 %
+% version 1.1.2 - Removed restriction on decimal places in log output.
 % version 1.1.1 - Properly scale values outside the range
 % [lowerthresh,upperthresh] to 0 and MAXINT.
 %
@@ -28,7 +29,7 @@ large = upperthresh;
 if(nargin) < 4, lowerthresh = min(stack(:)); end
 small = lowerthresh;
 
-fprintf(logfile, '\nOLD MIN: %.1f   OLD MAX: %.1f \n', small, large);
+fprintf(logfile, '\nOLD MIN: %f   OLD MAX: %f \n', small, large);
 
 if large ~= double(2^bitdepth - 1) || small ~= 0
     % Rescale the values
