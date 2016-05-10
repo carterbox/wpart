@@ -45,6 +45,7 @@ zmax = max(points(:,3));
 surf(X, -(normal(1)/normal(2)*X + normal(3)/normal(2)*Z -...
      dot(normal,point)/normal(2)), Z,'facecolor','red','facealpha',0.5);
 %surf(X,repmat(point(2),size(X)),Z);
+title('Best Fit Plane for Bondline'); hold off;
 
 % For each TRUE value in volume calculate the WP and WP
 EP = effective_penetration(volume,normal,point);
@@ -64,7 +65,8 @@ if(normal(2) == 0), error('Bondline should horizontal in slices!' + ...
 fprintf('\nCalculating EP...');
 %z = @(x,y) (dot(normal,point) - (normal(1)*x + normal(2)*y)) / normal(3);
 %area = integral2(z,0,1,0,1);
-[xmax,~,zmax] = size(volume);
+[~,xmax,zmax] = size(volume);
+% Switch x,y because matlab imageJ coordinate difference
 area = sqrt((-normal(1)/normal(2)).^2 + (-normal(3)/normal(2)).^2 + 1) ...
        * (xmax - 1) * (zmax - 1);
 
@@ -80,13 +82,16 @@ function WP = weighted_penetration(volume,normal,point)
 fprintf('\nCalculating WP...');
 
     trus = find(volume);
-    [x,y,z] = ind2sub(size(volume),trus); clear trus;
+    [y,x,z] = ind2sub(size(volume),trus);
+    % Switch x,y because matlab imageJ coordinate difference
+    clear trus;
     
     normal = normal/norm(normal);
     
     distance = (x-point(1))*normal(1) + (y-point(2))*normal(2) + (z-point(3))*normal(3);
-    
-    WP = sqrt( sum(distance.^2) / sum(volume(:)));
+    figure(2); boxplot(distance); title('Particle Distance from Bondline')
+    %figure, scatter(x,y);
+    WP = sqrt( sum(distance.^2)/ sum(volume(:)) );
     
     fprintf(' %f\n', WP);
 end
