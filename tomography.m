@@ -254,11 +254,11 @@ classdef tomography
                 
                 if ~isempty(obj.labels)
                 for chunk_start = 1:stride:z
-                    chunk = stack(:,:,chunk_start:min([chunk_start+stride;z]));
+                    chunk = stack(:,:,chunk_start:min([chunk_start+stride-1;z]));
                     % Color Segmentation
                     chunk = obj.labels{key}(chunk + 1);
                     chunk = removeislands(chunk, 8, 100);
-                    stack(:,:,chunk_start:min([chunk_start+stride;z])) = chunk;
+                    stack(:,:,chunk_start:min([chunk_start+stride-1;z])) = chunk;
                 end
                 
                 fprintf('Coloring...\n');
