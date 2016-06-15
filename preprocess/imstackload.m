@@ -47,7 +47,7 @@ if fraction < 1
     image_count = numsamples;
 end
 
-if nargin < 2
+if nargin < 2 || length(type) < 2
     % Automagically check the bitdepth of the first loaded image and
     % allocate the appropriate array.
     info = imfinfo(namestack{1});
