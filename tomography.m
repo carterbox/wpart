@@ -193,9 +193,9 @@ classdef tomography
                     
                     switch class(stack)
                         case 'uint8'
-                            hi = 2^8;
+                            hi = 2^8 - 1;
                         case 'uint16'
-                            hi = 2^16;
+                            hi = 2^16 - 1;
                         otherwise
                             hi = max(stack(:));
                     end
@@ -217,7 +217,7 @@ classdef tomography
                     end
                     close(h);
 
-                    [llabels, ~, gaussfig] = findThresholds(stack, obj.numdists(1), obj.bitdepth, logfile);
+                    [llabels, stepfig, gaussfig] = findThresholds(stack, obj.numdists(1), hi, logfile);
                     print(gaussfig, [OUTDIR sprintf('/step%02ig',key)], '-dpng');
                     print(stepfig, [OUTDIR sprintf('/step%02is',key)], '-dpng');
 
