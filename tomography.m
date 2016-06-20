@@ -186,7 +186,7 @@ classdef tomography
                     fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
                     
                     % Sample 2 percent of the data to reduce memory and processing consumption.
-                    stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}], 'uint16', 0.0025);
+                    stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}], 'uint8', 0.0025);
                     hi = max(stack(:));
 
                     %Mask out areas not adjacent to adhesive in order to
@@ -200,14 +200,15 @@ classdef tomography
                         %SE = strel('ball', R, H, N);
                         SE = strel('octagon', R);
                         mask = imdilate(mask, SE);
-                        stack(:,:,slice) = uint16(img.*uint16(mask));
+                        stack(:,:,slice) = (img.*cast(mask,'like',img));
                         imshow(stack(:,:,slice));
                         pause(1);
                     end
                     close(h);
 
-                    [llabels, ~, gaussfig] = findThresholds(stack, obj.numdists(1), 16, logfile);
-                    print(gaussfig, [OUTDIR sprintf('/sample%02i',key)], '-dpng');
+                    [llabels, stepfig, gaussfig] = findThresholds(stack, obj.numdists(1), 16, logfile);
+                    print(gaussfig, [OUTDIR sprintf('/step%02ig',key)], '-dpng');
+                    print(stepfig, [OUTDIR sprintf('/step%02is',key)], '-dpng');
 
                     obj.thresh16(key) = find(llabels>1,1);
                     obj.labels{key} = llabels;
