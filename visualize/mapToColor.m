@@ -1,4 +1,4 @@
-function [colorImage] = mapToColor(Function, images_dir, lo, hi)
+function [colorImage] = mapToColor(Function, images_dir, lo, hi,outdir, samplename)
 %MAPTOCOLOR takes a 3D Function and overlays it on stack of images.
 %
 %version 2.2.0
@@ -63,33 +63,35 @@ Qy = fmin(2):fmax(2);
 fprintf(logfile,'Interpolating function to slices...');
 
 %slices = [1:numSlices]+fmin(3)-1;
-slices = [448,1273];
+slices = 105:1645;
 
-if(numel(gcp) > 0), delete(gcp); end 
-c = parcluster();
-j = createJob(c);
-
-for i = 1:numel(slices)
+%if(numel(gcp) > 0), delete(gcp); end 
+%c = parcluster();
+%j = createJob(c);
+%delete(c.Jobs);
+mkdir(outdir);
+parfor i = 1:numel(slices)
     % Interpolate all the values of the function to 1 pixel spacing
     if slices(i) > count
         dir = false;
     else
         dir = [images_dir '/' images_names{slices(i)}];
     end
-    createTask(j,@doslice,1,...
-               {Interpolator,Qx,Qy,slices(i),dir,RGBmap,fmin,fmax});
-    %doslice(Interpolator,Qx,Qy,slices(i),dir,RGBmap,fmin,fmax);
+    %createTask(j,@doslice,1,...
+    %           {Interpolator,Qx,Qy,slices(i),dir,RGBmap,fmin,fmax});
+    x = doslice(Interpolator,Qx,Qy,slices(i),dir,RGBmap,fmin,fmax,outdir,samplename,i);
 end
 
-submit(j);
-wait(j);
-colorImage = fetchOutputs(j);
-delete(c.Jobs);
+%submit(j);
+%wait(j);
+%colorImage = fetchOutputs(j);
+colorImage = 0;
+%delete(c.Jobs);
 
 fprintf(logfile,' DONE.\n');
 end
 
-function f = doslice(Interpolator,x,y,z,image_name,RGBmap,fmin,fmax)
+function f = doslice(Interpolator,x,y,z,image_name,RGBmap,fmin,fmax,outdir,samplename,k)
 if image_name == false
     I = false;
 else
@@ -98,6 +100,8 @@ else
 end
 f = Interpolator({x,y,z});
 f = COMBINE_VOLUMES(f,I,RGBmap,fmin,fmax);
+filename = [ outdir sprintf('%s_%04i.%s', samplename, k, 'png' )];
+imwrite(f, filename, 'png' );
 end
 
 function colorImage = COMBINE_VOLUMES(F, I, RGBmap, fmin, fmax)
