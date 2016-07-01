@@ -61,7 +61,7 @@ if h1 == length(h.Values)
     append = repmat(append,secondheight,1);
     append = append + max(sample);
     sample = cat(1,sample,append(:));
-    MAXINT = max(append(:));
+    MAXINT = max([MAXINT,max(append(:))]);
     figure(g);h = histogram(sample, MAXINT);
 end
 %TODO: Figure out a better way to put another peak beyond the edge of the
