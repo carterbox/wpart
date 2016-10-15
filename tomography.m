@@ -94,7 +94,7 @@ classdef tomography
                    h = figure(1);
                    stack = removex(stack(:),2^16-1,1);
                    histogram(stack, 2^16,'Normalization','pdf');
-                   axis([0 2^16 0 inf]);
+%                    axis([0 2^16 0 inf]);
                    
                    while(true)
                         try
@@ -235,12 +235,18 @@ classdef tomography
             save([OUTDIR sprintf('/tomography.mat')], 'obj');
         end
 
-        function obj = segmentSubsets(obj)
+        function obj = segmentSubsets(obj, N)
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
             %if size(gcp) == 0, p = parpool(4); else p = gcp; end
+            
             NUMSTACKS = length(obj.projname);
+                
+            if nargin > 1
+                NUMSTACKS = N;
+            end
+            
             for key = 1:NUMSTACKS
                 % Load each of the stacks to process them separately
                 stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}]);
