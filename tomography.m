@@ -131,8 +131,8 @@ classdef tomography
         function obj = gatherSubsets(obj, varargin)
             
             runquiet = false;
-            if numel(varargin) == 1; runquiet = true; end
-            if numel(varargin) > 1; N = varargin(2);
+            if numel(varargin) > 0; runquiet = varargin{1}; end
+            if numel(varargin) > 1; N = varargin{2};
             else N = numel(obj.projname); end
             
             for i = 1:N
