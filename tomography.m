@@ -30,11 +30,12 @@ classdef tomography
 % profile. The resulting profile will always have four phases. Although,
 % assigning a peak to phase 3 is optional.
 
-% SEGMENTSUBSETS() Using the segmentation profiles created using fitdists()
-% each subset is segmented in two ways: color and no_background. Color
-% assigns each of the four phases to an red, green, blue, or black.
-% No_background removes phase 1 and rescale the original greyscale image to
-% cover the entire grey range.
+% SEGMENTSUBSETS(method) Using the segmentation profiles created using fitdists()
+% each subset is segmented in one of two ways: 'color' and 'no_background'.
+% 'color' assigns each of the four phases to an red, green, blue, or black.
+% 'no_background' removes phase 1 and rescale the original greyscale image to
+% cover the entire grey range. Use the keywords: 'color' or 'no_backgroud'
+% as input.
 
 % PENETRATIONSTATS(bondline_file) Calculates the effective penetration (EP)
 % and weighted penetration (WP) of the bondline from the segmented volume 
@@ -130,9 +131,11 @@ classdef tomography
         function obj = gatherSubsets(obj, varargin)
             
             runquiet = false;
-            if numel(varargin) == 1; runquiet = true; end
+            if numel(varargin) > 0; runquiet = varargin{1}; end
+            if numel(varargin) > 1; N = varargin{2};
+            else N = numel(obj.projname); end
             
-            for i = 1:numel(obj.projname)
+            for i = 1:N
                 
                 % Creating a working directories
                 outdir = [obj.subset_dir obj.samplename obj.projname{i}];
@@ -235,7 +238,8 @@ classdef tomography
             save([OUTDIR sprintf('/tomography.mat')], 'obj');
         end
 
-        function obj = segmentSubsets(obj, N)
+
+        function obj = segmentSubsets(obj, method, N)
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
@@ -243,11 +247,13 @@ classdef tomography
             
             NUMSTACKS = length(obj.projname);
                 
-            if nargin > 1
+            if nargin > 2
                 NUMSTACKS = N;
             end
             
-            for key = 1:NUMSTACKS
+            if strcmp(method,'no_background')
+                for key = 1:NUMSTACKS
+
                 % Load each of the stacks to process them separately
                 stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}]);
                 referenceslice = (stack(:,:,100));
@@ -273,6 +279,17 @@ classdef tomography
                 end
                 imstacksave(bwoutput,OUTDIR,sprintf('%s_%02i',obj.samplename,key),'raw');
                 clear bwoutput;
+                end
+                
+            elseif strcmp(method,'color');
+                for key = 1:NUMSTACKS
+                    
+                % Load each of the stacks to process them separately
+                stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}]);
+                referenceslice = (stack(:,:,100));
+
+                z = size(stack,3);
+                stride = 100;
                 
                 if ~isempty(obj.labels)
                 for chunk_start = 1:stride:z
@@ -289,7 +306,12 @@ classdef tomography
                 print([OUTDIR '/comparisonc' num2str(key,'%02i')],'-dpng');
                 end
                 clear stack;
+                end
+                
+            else
+               error('Please provide a method for segmentation as input. Choose "color" or "no_background".'); 
             end
+            
             fprintf(logfile,'\n');
             fclose(logfile); close all;
         end    
