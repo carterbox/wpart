@@ -14,6 +14,11 @@ function [ stack ] = imstackload( directory, type, fraction )
 if nargin < 3, fraction = 1; end
 kEXTENSION = {'.tif', '.png', '.tiff'};
 
+if exist(directory) == 2
+    stack = imread(directory);
+    return
+end
+
 %% Load the names of all the files in the directory
 fcontents = dir(directory);
 addpath( genpath(directory) );
