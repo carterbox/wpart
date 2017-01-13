@@ -31,6 +31,7 @@ for i = 1:numdists
     figure(h); hold on;
     plot(range,probabilities(:,:),'k'); 
     plot(range,probabilities(:,i),'r');
+    axis([-inf,inf,0,min(max(probabilities))*10]);
     hold off;
     acceptable = false;
     while ~acceptable

@@ -14,6 +14,11 @@ function [ stack ] = imstackload( directory, type, fraction )
 if nargin < 3, fraction = 1; end
 kEXTENSION = {'.tif', '.png', '.tiff'};
 
+if exist(directory) == 2
+    stack = imread(directory);
+    return
+end
+
 %% Load the names of all the files in the directory
 fcontents = dir(directory);
 addpath( genpath(directory) );
@@ -47,7 +52,7 @@ if fraction < 1
     image_count = numsamples;
 end
 
-if nargin < 2
+if nargin < 2 || length(type) < 2
     % Automagically check the bitdepth of the first loaded image and
     % allocate the appropriate array.
     info = imfinfo(namestack{1});

@@ -1,4 +1,4 @@
-function [labels, stepfig, gaussfig] = findThresholds( sample, numdists, bitdepth, logfile )
+function [labels, stepfig, gaussfig] = findThresholds( sample, numdists, MAXINT, logfile )
 %FINDTHRESHOLDS uses expectation maximization to cluster pixel
 % intensitities into groups.
 % 
@@ -22,7 +22,7 @@ function [labels, stepfig, gaussfig] = findThresholds( sample, numdists, bitdept
 MAXITER = 800; % Maxium iterations for EM fitting of gaussians
 TERMCRIT = 1e-7;
 REPS = 3; % Number of times to attempt EM fitting of guassians
-MAXINT = 2^bitdepth - 1;
+%MAXINT = 2^bitdepth - 1;
 UPPERTHRESH = MAXINT+1;
 LOWERTHRESH = 0;
 sample = double(sample(:));
@@ -61,7 +61,7 @@ if h1 == length(h.Values)
     append = repmat(append,secondheight,1);
     append = append + max(sample);
     sample = cat(1,sample,append(:));
-    MAXINT = max(append(:));
+    MAXINT = max([MAXINT,max(append(:))]);
     figure(g);h = histogram(sample, MAXINT);
 end
 %TODO: Figure out a better way to put another peak beyond the edge of the
@@ -120,7 +120,9 @@ hold on;
 plot(range, pdf(gaussianmix, range'),'LineWidth', 2.0);
 % Plot each gaussian separately as well.
 plot(range, separatedpdfs, 'LineWidth', 2.0);
-axis([0 MAXINT*1.05 0 inf]);
+top = min(max(separatedpdfs))*10;
+if top == 0, top = inf; end
+axis([0 MAXINT*1.05 0 top]);
 hold off;
 
 set(groot,'defaultAxesColorOrder','remove')

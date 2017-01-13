@@ -57,7 +57,7 @@ classdef tomography
         width;
         depth;
         
-        bitdepth = 16; % The desired working bitdepth
+        bitdepth = 8; % The desired working bitdepth
         numdists = [4];
         thresh16 = [3*10^4];
         labels = {};
@@ -94,7 +94,7 @@ classdef tomography
                    h = figure(1);
                    stack = removex(stack(:),2^16-1,1);
                    histogram(stack, 2^16,'Normalization','pdf');
-                   axis([0 2^16 0 inf]);
+%                    axis([0 2^16 0 inf]);
                    
                    while(true)
                         try
@@ -152,11 +152,14 @@ classdef tomography
                     error('Didn''t crop the correct subsection.');
                 end
                 
-                [~,~,ldepth] = size(stack);
+                [lh,lw,ldepth] = size(stack);
                 fprintf(logfile, 'depth: %i\n', ldepth );
                 if ldepth ~= obj.depth, warning('Desired stack depth not reached.'); end
+                stack = imadjust(stack(:),[0,1],[0,1],3); % gamma adjustment
+                stack = reshape(stack,lh,lw,ldepth);
+                
                 stack = rescale(stack, obj.bitdepth, logfile);
-
+                
                 disp('Saving subset ...');
                 imstacksave(stack, outdir, obj.projname{i});
                 fclose( logfile );
@@ -186,8 +189,16 @@ classdef tomography
                     fprintf('FINDING DISTRIBUTION FOR SAMPLE %i\n', key);
                     
                     % Sample 2 percent of the data to reduce memory and processing consumption.
-                    stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}], 'uint16', 0.0025);
-                    hi = max(stack(:));
+                    stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}], '', 0.0025);
+                    
+                    switch class(stack)
+                        case 'uint8'
+                            hi = 2^8 - 1;
+                        case 'uint16'
+                            hi = 2^16 - 1;
+                        otherwise
+                            hi = max(stack(:));
+                    end
 
                     %Mask out areas not adjacent to adhesive in order to
                     %improve histogram quality.
@@ -200,14 +211,15 @@ classdef tomography
                         %SE = strel('ball', R, H, N);
                         SE = strel('octagon', R);
                         mask = imdilate(mask, SE);
-                        stack(:,:,slice) = uint16(img.*uint16(mask));
+                        stack(:,:,slice) = (img.*cast(mask,'like',img));
                         imshow(stack(:,:,slice));
                         pause(1);
                     end
                     close(h);
 
-                    [llabels, ~, gaussfig] = findThresholds(stack, obj.numdists(1), 16, logfile);
-                    print(gaussfig, [OUTDIR sprintf('/sample%02i',key)], '-dpng');
+                    [llabels, stepfig, gaussfig] = findThresholds(stack, obj.numdists(1), hi, logfile);
+                    print(gaussfig, [OUTDIR sprintf('/step%02ig',key)], '-dpng');
+                    print(stepfig, [OUTDIR sprintf('/step%02is',key)], '-dpng');
 
                     obj.thresh16(key) = find(llabels>1,1);
                     obj.labels{key} = llabels;
@@ -223,31 +235,41 @@ classdef tomography
             save([OUTDIR sprintf('/tomography.mat')], 'obj');
         end
 
-        function obj = segmentSubsets(obj)
+        function obj = segmentSubsets(obj, N)
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
             %if size(gcp) == 0, p = parpool(4); else p = gcp; end
+            
             NUMSTACKS = length(obj.projname);
+                
+            if nargin > 1
+                NUMSTACKS = N;
+            end
+            
             for key = 1:NUMSTACKS
                 % Load each of the stacks to process them separately
                 stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}]);
-                referenceslice = (stack(:,:,1));
+                referenceslice = (stack(:,:,100));
 
-                % Segment the image according to the lookup-table.
-                fprintf('Mapping...\n');
-                bwoutput = zeros(size(stack),'uint8');
-                if key > numel(obj.thresh16)
-                    thresh = obj.thresh16(1);
-                else
-                    thresh = obj.thresh16(key);
-                end
                 z = size(stack,3);
                 stride = 100;
-                
-                parfor chunk_start = 1:z
-                    % BW Remove background images
-                    bwoutput(:,:,chunk_start) = rescale(stack(:,:,chunk_start), 8, 1, thresh, 2^16);
+                if(isa(stack,'uint8'))
+                    bwoutput = stack;
+                else
+                    % Segment the image according to the lookup-table.
+                    fprintf('Mapping...\n');
+                    bwoutput = zeros(size(stack),'uint8');
+                    if key > numel(obj.thresh16)
+                        thresh = obj.thresh16(1);
+                    else
+                        thresh = obj.thresh16(key);
+                    end
+ 
+                    parfor chunk_start = 1:z
+                        % BW Remove background images
+                        bwoutput(:,:,chunk_start) = rescale(stack(:,:,chunk_start), 8, 1, thresh, 2^16);
+                    end
                 end
                 imstacksave(bwoutput,OUTDIR,sprintf('%s_%02i',obj.samplename,key),'raw');
                 clear bwoutput;
