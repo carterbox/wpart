@@ -68,7 +68,7 @@ if(numdists < 2 || numdists > 5)
 end
               
 % numdists = 2,3: insert 3-mix
-if numdists < 4
+if numdists < 4 && numdists > 2
     higroup = 4;
     logroup = 2;
 
@@ -113,6 +113,6 @@ end
 % end
 
 plot(labels);
-assert(numdists == 4);
+assert(numdists == 4 || numdists == 2);
 end
 

@@ -4,9 +4,9 @@ function [labels,probabilities] = checklabels(labels,probabilities,~,~)
 % labeled correctly and that the gaussians were sorted correctly.
 
 [~,voidmean] = max(probabilities(:,1));
-[~,adhesivemean] = max(probabilities(:,4));
+[~,adhesivemean] = max(probabilities(:,max(labels)));
 labels(1:voidmean) = 1;
-labels(adhesivemean:end) = 4;
+labels(adhesivemean:end) = max(labels);
 
 left = length(labels);
 lo = 0; hi = labels(left); 
