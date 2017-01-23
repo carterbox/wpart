@@ -247,12 +247,12 @@ classdef tomography
             
             NUMSTACKS = length(obj.projname);
                 
-            if nargin > 2
-                NUMSTACKS = N;
+            if nargin < 2
+                N = 1:NUMSTACKS;
             end
             
             if strcmp(method,'no_background')
-                for key = 1:NUMSTACKS
+                for key = N
 
                 % Load each of the stacks to process them separately
                 stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}]);
@@ -281,8 +281,8 @@ classdef tomography
                 clear bwoutput;
                 end
                 
-            elseif strcmp(method,'color');
-                for key = 1:NUMSTACKS
+            elseif strcmp(method,'color')
+                for key = N
                     
                 % Load each of the stacks to process them separately
                 stack = imstackload([obj.subset_dir obj.samplename obj.projname{key}]);
