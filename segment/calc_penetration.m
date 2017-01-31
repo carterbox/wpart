@@ -72,7 +72,7 @@ area = sqrt((-normal(1)/normal(2)).^2 + (-normal(3)/normal(2)).^2 + 1) ...
 
 % Literally, take the sum of the number of adhesive voxels (volume)
 % and divide by the area of the bondline (area).
-EP = sum(volume(:))/area;
+EP = sum(volume(:))/area; %m^3/m^2
 fprintf(' %f', EP);
 end
 
@@ -89,9 +89,10 @@ fprintf('\nCalculating WP...');
     normal = normal/norm(normal);
     
     distance = (x-point(1))*normal(1) + (y-point(2))*normal(2) + (z-point(3))*normal(3);
-    figure(2); boxplot(distance); title('Particle Distance from Bondline')
+    figure(2); boxplot(distance); title('Particle Distance from Bondline');
+    drawnow;
     %figure, scatter(x,y);
-    WP = sqrt( sum(distance.^2)/ sum(volume(:)) );
+    WP = sqrt( sum(distance.^2)/ sum(volume(:)) ); %m^2/m^3
     
     fprintf(' %f\n', WP);
 end
