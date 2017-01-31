@@ -20,9 +20,10 @@ if exist(directory) == 2
 end
 
 %% Load the names of all the files in the directory
+
 fcontents = dir(directory);
 addpath( genpath(directory) );
-fprintf('Loading files from %s ... ', directory);
+fprintf('LOAD: %s ... \n', directory);
 
 image_count = 0;
 namestack = cell(numel(fcontents),1);
@@ -43,7 +44,7 @@ if image_count == 0
 end
 clear fcontents;
 
-%% Load the actual file data
+%% Reduce number of slices
 
 if fraction < 1
     numsamples = ceil(fraction*image_count);
@@ -52,45 +53,29 @@ if fraction < 1
     image_count = numsamples;
 end
 
+%% Preallocate output array
+
+first_slice = imread(namestack{1});
+
+% Determines the size of output array
+[m,n,o] = size(first_slice);
+
+% Automagically check the bitdepth of the first loaded image and
+% allocate the appropriate array.
 if nargin < 2 || length(type) < 2
-    % Automagically check the bitdepth of the first loaded image and
-    % allocate the appropriate array.
-    info = imfinfo(namestack{1});
-    switch(info.BitDepth)
-        case 8
-            type = 'uint8';
-        case 16
-            type = 'uint16';
-        case 32
-            type = 'single';
-        otherwise
-            type = 'double';
-    end 
+    stack = zeros([m,n,o,image_count], 'like', first_slice);
+else
+    stack = zeros([m,n,o,image_count], type);
 end
 
-% Determines the size of the images that will be loaded
-[m,n,o] = size(imread(namestack{1}));
+%% Load images
 
-if o == 1 % the images are not color
-    % preallocate the array for the images
-    stack = zeros([m,n,image_count], type);
-
-    %loads all the files into the matrix
-    for i = 1:image_count
-        stack(:,:,i) = imread(namestack{i});
-    end
-    
-    fprintf('LOADED %i FILES\n', image_count);
-    
-else % the images are color and need a cell
-    stack = cell(image_count,1);
-    
-    %loads all the files into the cell
-    for i = 1:image_count;
-            stack{i} = imread(namestack{i});
-    end
-    
-    fprintf('LOADED %i FILES\n', image_count);
-    warning('Color images detected. Returning a cell.');
+for i = 1:image_count
+    stack(:,:,:,i) = imread(namestack{i});
 end
+
+stack = permute(stack,[1,2,4,3]);
+
+fprintf('LOADED %i FILES\n', image_count);
+
 end

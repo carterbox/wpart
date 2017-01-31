@@ -325,11 +325,8 @@ classdef tomography
             
             color = imstackload(sprintf('%s/color_%02i',OUTDIR,key));
 
-            binary = false(size(color{1},1), size(color{1},2), numel(color));
-            for i = 1:numel(color)
-               binary(:,:,i) = color{i}(:,:,1) > 0 | color{i}(:,:,3) > 0; 
-            end
-
+            binary = color(:,:,:,1) | color(:,:,:,3); 
+            
             bondline = importdata(bondline_file);
             bondline = bondline.data;
             [EP, WP] = calc_penetration(binary, bondline);
