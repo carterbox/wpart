@@ -64,8 +64,8 @@ classdef tomography
         
         
         function obj = setnumdists(obj, varargin)        
-        % T = SETNUMDISTS(T, N) returns a copy of T with the number of
-        % distributions for histogram fitting to N. If no inputs are given,
+        % T = SETNUMDISTS(T, NUM_DISTS) returns a copy of T with the number of
+        % distributions for histogram fitting to NUM_DISTS. If no inputs are given,
         % it will draw a histogram from the data and prompt the user to
         % choose an initial number of distributions.
         %% ----------------------------------------------------------------
@@ -140,9 +140,9 @@ classdef tomography
             runquiet = false;
             if numel(varargin) > 0; runquiet = varargin{1}; end
             if numel(varargin) > 1; N = varargin{2};
-            else N = numel(obj.projname); end
+            else N = 1:numel(obj.projname); end
             
-            for i = 1:N
+            for i = N
                 
                 % Creating a working directories
                 outdir = [obj.subset_dir obj.samplename obj.projname{i}];
