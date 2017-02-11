@@ -13,3 +13,4 @@ tomodata.segmented_dir = '/media/OCT14M/OCT14M/Segmentations/Daniel'; % The dire
 tomodata = tomodata.gatherSubsets();
 tomodata = tomodata.fitDists();
 tomodata = tomodata.segmentSubsets();
+tomodata = tomodata.penetrationStats();
