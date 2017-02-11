@@ -63,14 +63,14 @@ classdef tomography
         end
         
         
-        function obj = setnumdists(obj, varargin)        
+        function obj = setnumdists(obj, num_dists)        
         % T = SETNUMDISTS(T, NUM_DISTS) returns a copy of T with the number of
         % distributions for histogram fitting to NUM_DISTS. If no inputs are given,
         % it will draw a histogram from the data and prompt the user to
         % choose an initial number of distributions.
         %% ----------------------------------------------------------------
-           if numel(varargin) == 1
-               obj.numdists(1) = varargin{1};
+           if exist('num_dists', 'var') == 1
+               obj.numdists(1) = num_dists;
            else
                key = 1;
                if ~isempty(obj.projname) && exist([obj.subset_dir obj.samplename obj.projname{key}],'dir')
@@ -124,7 +124,7 @@ classdef tomography
         end
         
         
-        function obj = gatherSubsets(obj, varargin)
+        function obj = gatherSubsets(obj, quiet, N)
         % T = GATHERSUBSETS(T, QUIET, N) Collect volumes from
         % recon_dir/projname and crop out subsets according to
         % rotationCW, x0, y0, z0, height, width, and depth.
@@ -137,10 +137,8 @@ classdef tomography
         % gathered.
         %% ---------------------------------------------------------------
             
-            runquiet = false;
-            if numel(varargin) > 0; runquiet = varargin{1}; end
-            if numel(varargin) > 1; N = varargin{2};
-            else N = 1:numel(obj.projname); end
+            if exist('quiet', 'var') == 0; quiet = false; end
+            if exist('N', 'var') == 0; N = 1:numel(obj.projname); end
             
             for i = N
                 
@@ -157,7 +155,7 @@ classdef tomography
                 fprintf(logfile, 'width: %i  height: %i depth: %i\n', obj.width, obj.height, obj.depth);
 
                 % Loading rotating cropping and scaling
-                stack = makeSubset( indir, obj.rotationCW(i), obj.x0(i), obj.y0(i), obj.z0(i), obj.width, obj.height, obj.depth, runquiet);
+                stack = makeSubset( indir, obj.rotationCW(i), obj.x0(i), obj.y0(i), obj.z0(i), obj.width, obj.height, obj.depth, quiet);
                 if(stack == false)
                     error('Didn''t crop the correct subsection.');
                 end
@@ -196,14 +194,9 @@ classdef tomography
             logfile = fopen([OUTDIR '/log.txt'],'a');
             fprintf(logfile,['\n' datestr(datetime('now')) '\n\n']);
             
+            if exist('N', 'var') == 0; N = 1:numel(obj.projname); end
+            
             if usejava('awt')
-            
-            NUMSTACKS = length(obj.projname);
-                
-            if nargin < 2
-                N = 1:NUMSTACKS;
-            end
-            
             for key = N
                 addpath(genpath([obj.subset_dir obj.samplename obj.projname{key}]));
                 
@@ -276,13 +269,8 @@ classdef tomography
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
-            %if size(gcp) == 0, p = parpool(4); else p = gcp; end
-            
-            NUMSTACKS = length(obj.projname);
                 
-            if nargin < 2
-                N = 1:NUMSTACKS;
-            end
+            if exist('N', 'var') == 0; N = 1:numel(obj.projname); end
             
             if strcmp(method,'no_background')
                 for key = N
