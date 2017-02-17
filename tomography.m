@@ -1,5 +1,6 @@
 classdef tomography
-% TOMOGRAPHY an object for organizing and segmenting tomography data.
+% TOMOGRAPHY an object for organizing, cropping, and segmenting tomography
+%   data.
 %
 % TOMOGRAPHY has the following properties:
 %   ROTATIONCW a list of the clockwise rotation applied before cropping.
