@@ -328,7 +328,10 @@ classdef tomography
             binary = color(:,:,:,1) | color(:,:,:,3); 
             
             bondline = importdata(bondline_file);
-            bondline = bondline.data;
+            try
+                bondline = bondline.data;
+            catch
+            end
             [EP, WP] = calc_penetration(binary, bondline);
             fprintf(logfile, ['\nEffective Penetration: %f' ...
                               '\n Weighted Penetration: %f'], EP, WP);
