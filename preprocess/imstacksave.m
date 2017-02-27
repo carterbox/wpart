@@ -13,7 +13,7 @@ function [] = imstacksave( stack, outdir, samplename, format )
 % version 1.1.0 - adds capability to save BW images as raw files
 %% -----------------------------------------------------------------------
 if samplename(1) ~= '/', samplename = ['/' samplename]; end
-if nargin < 4; format = 'png'; end
+if nargin < 4; format = 'tiff'; end
 
 mkdir(outdir);
 fprintf('Saving images from stack to %s\n', outdir);
