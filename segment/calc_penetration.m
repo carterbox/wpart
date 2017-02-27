@@ -22,6 +22,9 @@ function [EP, WP] = calc_penetration(volume, points)
 %volume = true(3,3,3);
 
 %% ------------------------------------------------------------------------
+figure(3);
+imshow(sum(volume,3));
+title('Depth sum of tagged points.');
 
 % Generate a best fit plane from the points and plot it to check.
 [normal, V, point] = affine_fit(points);
