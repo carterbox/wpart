@@ -1,55 +1,33 @@
 classdef tomography
-%TOMOGRAPHY an object for storing and segmenting tomography data.
-%   This object has 3 main functions: gatherSubsets, fitDists, and
-%   segmentSubsets AND three functions that help set the properties of the
-%   object: the default constructor, setnumdists, and setprojname.
-
-% version 2.1.0 
-
-% tomography(width,height,depth,samplename)
-
-% SETNUMDISTS(N) Allows for 1 or 0 inputs. If 0 inputs are given, it will 
-% draw a histogram for the data at recond_dir/projname{1} and prompt the user
-% to choose an initial number of distributions.
-
-% SETPROJNAME(words, numbers) Allows for quickly setting a series of 
-% projnames with the same base name but different numbers at the end. e.g. 
-% for setprojname('sample', [4,2,9]) projname would become {'/sample_4',
-% '/sample_2', '/sample_9'}.
-
-% GATHERSUBSETS(quiet) Collects volumes from recon_dir/projname and crops out 
-% a subset according to rotationCW, x0, y0, z0, height, width, and 
-% depth. It saves the subset in the subset_dir/samplename/projname. OPTIONAL add quiet
-% = true as an optional parameter to skip prompt to inspect slice before
-% saving.
-
-% FITDISTS() Leads the user through the process of fitting gaussian
-% distributions to the histograms of randomly sampled slices from each
-% subset. For each subset the user will be asked to sort the fitted
-% distributions and then approve or reject the resulting segmentation
-% profile. The resulting profile will always have four phases. Although,
-% assigning a peak to phase 3 is optional.
-
-% SEGMENTSUBSETS(method) Using the segmentation profiles created using fitdists()
-% each subset is segmented in one of two ways: 'color' and 'no_background'.
-% 'color' assigns each of the four phases to an red, green, blue, or black.
-% 'no_background' removes phase 1 and rescale the original greyscale image to
-% cover the entire grey range. Use the keywords: 'color' or 'no_backgroud'
-% as input.
-
-% PENETRATIONSTATS(bondline_file) Calculates the effective penetration (EP)
-% and weighted penetration (WP) of the bondline from the segmented volume 
-% and a CSV file containing points marking the bondline. The result is put 
-% in the log file.
-
-% version 2.0.0 - changed order in which width, height, depth are listed
-% and changed the subset specification parameters.
-
+% TOMOGRAPHY an object for organizing, cropping, and segmenting tomography
+%   data.
+%
+% TOMOGRAPHY has the following properties:
+%   ROTATIONCW a list of the clockwise rotation applied before cropping.
+%   X0, Y0, Z0 a list of the coordinates of min corner of the cropped
+%       subset after rotation inside the raw tomography.
+%   HEIGHT, WIDTH, DEPTH the size of all of the cropped subsets.
+%   BITDEPTH the bitdepth of the subsets returned after cropping.
+%       Default: 8
+%   NUMDISTS a list of the number of gaussians fit to the subset histograms.
+%       Default: 4
+%   THRESH16 a list of the threshold values between background and
+%       foreground data.
+%       Default: 3*10^4
+%   LABELS
+%   SAMPLENAME the name of the group of projects. All the created files
+%       will be organized under a folder of this name.
+%   PROJNAME the names of each of the folders containing the raw
+%       tomography.
+%   RECON_DIR the directory where reconstructions are stored.
+%   SUBSET_DIR the directory to put the subsets.
+%   SEGMENTED_DIR the directory to put the segmented subsets.
+%
 %% -----------------------------------------------------------------------
     properties
         % Properties related to cropping a subset
-        rotationCW = []; % Clockwise rotation applied before cropping
-        x0 = []; % Coordinates of the subset closest to the min corner
+        rotationCW = [];
+        x0 = []; 
         y0 = [];
         z0 = [];
         
@@ -58,21 +36,25 @@ classdef tomography
         width;
         depth;
         
-        bitdepth = 8; % The desired working bitdepth
+        bitdepth = 8;
         numdists = [4];
         thresh16 = [3*10^4];
         labels = {};
         
-        samplename = ''; % The name of the a group of projects
-        projname = {}; % The names of each of the scans of the sample with leading /
-        recon_dir = './'; % The directory of the reconstructions
-        subset_dir = './'; % The directory to put the subsets
-        segmented_dir = './'; % The directory to put the segmented subsets
+        samplename = '';
+        projname = {};
+        recon_dir = './';
+        subset_dir = './';
+        segmented_dir = './';
     end
     
+    
     methods
-%% Default Constructor
         function obj = tomography(width,height,depth,samplename)
+        % T = TOMOGRAPHY(WIDTH,HEIGHT,DEPTH,SAMPLENAME) is the default
+        % contructor it assigns the shape and name of the subset which
+        % will be created and managed.
+        %% ----------------------------------------------------------------
             obj.width = width;
             obj.height = height;
             obj.depth = depth;
@@ -80,10 +62,16 @@ classdef tomography
             if samplename(1) ~= '/', samplename = ['/' samplename]; end
             obj.samplename = samplename;
         end
-%% Setter Functions
-        function obj = setnumdists(obj, varargin)
-           if numel(varargin) == 1
-               obj.numdists(1) = varargin{1};
+        
+        
+        function obj = setnumdists(obj, num_dists)        
+        % T = SETNUMDISTS(T, NUM_DISTS) returns a copy of T with the number of
+        % distributions for histogram fitting to NUM_DISTS. If no inputs are given,
+        % it will draw a histogram from the data and prompt the user to
+        % choose an initial number of distributions.
+        %% ----------------------------------------------------------------
+           if exist('num_dists', 'var') == 1
+               obj.numdists(1) = num_dists;
            else
                key = 1;
                if ~isempty(obj.projname) && exist([obj.subset_dir obj.samplename obj.projname{key}],'dir')
@@ -118,7 +106,15 @@ classdef tomography
            end
         end
         
+        
         function obj = setprojname(obj,words,numbers)
+        % T = SETPROJNAME(T, WORDS, NUMBERS) returns a copy of T with
+        % T.projnames set with WORDS as the same base name and NUMBERS
+        % as the suffex.
+        %
+        % For setprojname('sample', [4,2,9]) projname would become
+        % {'/sample_4', '/sample_2', '/sample_9'}.
+        %% -----------------------------------------------------------
             n = numel(numbers);
             if words(1) ~= '/', words = ['/' words]; end            
             
@@ -127,15 +123,25 @@ classdef tomography
                 obj.projname{i} = sprintf('%s%i',words,numbers(i));
             end
         end
-%% Tomography Class Methods    
-        function obj = gatherSubsets(obj, varargin)
+        
+        
+        function obj = gatherSubsets(obj, quiet, N)
+        % T = GATHERSUBSETS(T, QUIET, N) Collect volumes from
+        % recon_dir/projname and crop out subsets according to
+        % rotationCW, x0, y0, z0, height, width, and depth.
+        % Save the subsets in the subset_dir/samplename/projname.
+        %
+        % If QUIET is True, there will be no prompt to inspect gathered
+        % slices before saving.
+        %
+        % If N is specified, then only subsets in the range N will be
+        % gathered.
+        %% ---------------------------------------------------------------
             
-            runquiet = false;
-            if numel(varargin) > 0; runquiet = varargin{1}; end
-            if numel(varargin) > 1; N = varargin{2};
-            else N = numel(obj.projname); end
+            if exist('quiet', 'var') == 0; quiet = false; end
+            if exist('N', 'var') == 0; N = 1:numel(obj.projname); end
             
-            for i = 1:N
+            for i = N
                 
                 % Creating a working directories
                 outdir = [obj.subset_dir obj.samplename obj.projname{i}];
@@ -150,7 +156,7 @@ classdef tomography
                 fprintf(logfile, 'width: %i  height: %i depth: %i\n', obj.width, obj.height, obj.depth);
 
                 % Loading rotating cropping and scaling
-                stack = makeSubset( indir, obj.rotationCW(i), obj.x0(i), obj.y0(i), obj.z0(i), obj.width, obj.height, obj.depth, runquiet);
+                stack = makeSubset( indir, obj.rotationCW(i), obj.x0(i), obj.y0(i), obj.z0(i), obj.width, obj.height, obj.depth, quiet);
                 if(stack == false)
                     error('Didn''t crop the correct subsection.');
                 end
@@ -170,20 +176,28 @@ classdef tomography
             end
         end
 
-        function obj = fitDists(obj, N)            
+        function obj = fitDists(obj, N)
+        % T = FITDISTS(T, N) Lead the user through the process of fitting
+        % gaussian distributions to the histograms of randomly sampled
+        % slices from each subset.
+        %
+        % For each subset the user will be asked to sort the fitted
+        % distributions and then approve or reject the resulting
+        % segmentation profile. The resulting profile will always have
+        % four phases. Although, assigning a peak to phase 3 is optional.
+        %
+        % If N is specified, then only subsets in the range N will be
+        % gathered.
+        %% ---------------------------------------------------------------
+            
             % Creating a Log file
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             logfile = fopen([OUTDIR '/log.txt'],'a');
             fprintf(logfile,['\n' datestr(datetime('now')) '\n\n']);
             
+            if exist('N', 'var') == 0; N = 1:numel(obj.projname); end
+            
             if usejava('awt')
-            
-            NUMSTACKS = length(obj.projname);
-                
-            if nargin < 2
-                N = 1:NUMSTACKS;
-            end
-            
             for key = N
                 addpath(genpath([obj.subset_dir obj.samplename obj.projname{key}]));
                 
@@ -240,16 +254,24 @@ classdef tomography
 
 
         function obj = segmentSubsets(obj, method, N)
+        % SEGMENTSUBSETS(T, METHOD, N) Segment the subsets according to
+        % profiles created using FITDISTS.
+        %
+        % METHOD is either 'color' or 'no_background'.
+        % 'color' assigns each of the four phases to an red, green, blue,
+        % or black.
+        % 'no_background' removes phase 1 and rescale the original
+        % greyscale image to cover the entire grey range.
+        %
+        % If N is specified, then only subsets in the range N will be
+        % gathered.
+        %% ---------------------------------------------------------------
+        
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
-            %if size(gcp) == 0, p = parpool(4); else p = gcp; end
-            
-            NUMSTACKS = length(obj.projname);
                 
-            if nargin < 2
-                N = 1:NUMSTACKS;
-            end
+            if exist('N', 'var') == 0; N = 1:numel(obj.projname); end
             
             if strcmp(method,'no_background')
                 for key = N
@@ -314,9 +336,20 @@ classdef tomography
             
             fprintf(logfile,'\n');
             fclose(logfile); close all;
-        end    
+        end
+
         
         function obj = penetrationStats(obj, bondline_file)
+        % PENETRATIONSTATS(BONDLINE_FILE) Calculate the effective
+        % penetration (EP) and weighted penetration (WP) of the bondline
+        % from the segmented volume and a csv file containing points
+        % marking the bondline. Print the result to the log file.
+        %
+        % BONDLINE_FILE is the location of the csv file which contains a
+        % list of points along the bondline. Each point is its own row. The
+        % columns are X, Y, Z coordinates.
+        %% ---------------------------------------------------------------
+
             OUTDIR = [obj.segmented_dir obj.samplename]; mkdir(OUTDIR);
             %load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
@@ -339,8 +372,11 @@ classdef tomography
     end
 end
 
+
 function A = removex(A,hi,lo)
-%REMOVEX removes values in A that are outside the range (lo,hi).
+% A = REMOVEX(A, HI, LO) Return a copy of A where values outside the range
+% (LO, HI) are removed.
+%% -----------------------------------------------------------------------
     if(nargin) < 3, lo = -1; end
 
     A = sort(A);
