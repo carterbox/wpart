@@ -339,7 +339,7 @@ classdef tomography
         end
 
         
-        function obj = penetrationStats(obj, bondline_file)
+        function obj = penetrationStats(obj, bondline_file, N)
         % PENETRATIONSTATS(BONDLINE_FILE) Calculate the effective
         % penetration (EP) and weighted penetration (WP) of the bondline
         % from the segmented volume and a csv file containing points
@@ -354,7 +354,8 @@ classdef tomography
             %load([OUTDIR sprintf('/tomography.mat')], 'obj');
             logfile = fopen([OUTDIR '/log.txt'],'a');
             %if size(gcp) == 0, p = parpool(4); else p = gcp; end
-            key = 1; % Only need bondline stats for the first step
+            if exist('N', 'var') == 0; N = 1; end
+            key = N; % Only need bondline stats for the first step
             
             color = imstackload(sprintf('%s/color_%02i',OUTDIR,key));
 
