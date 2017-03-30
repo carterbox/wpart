@@ -112,7 +112,7 @@ classdef tomography
         % T.projnames set with WORDS as the same base name and NUMBERS
         % as the suffex.
         %
-        % For setprojname('sample', [4,2,9]) projname would become
+        % For setprojname('sample_', [4,2,9]) projname would become
         % {'/sample_4', '/sample_2', '/sample_9'}.
         %% -----------------------------------------------------------
             n = numel(numbers);
@@ -120,7 +120,7 @@ classdef tomography
             
             obj.projname = cell(1,n);
             for i = 1:n
-                obj.projname{i} = sprintf('%s%i',words,numbers(i));
+                obj.projname{i} = sprintf('%s%s',words,string(numbers(i)));
             end
         end
         
