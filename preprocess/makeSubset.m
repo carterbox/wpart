@@ -24,10 +24,9 @@ if(nargin < 8), runquiet = false; end;
 
 % Extract the slice index of the first image.
 [~,number,~] = fileparts(namestack{1});
-[~, number] = strtok(number,'_');
-[~, number] = strtok(number,'_');
-[~, number] = strtok(number,'_');
-number = strtok(number,'_');
+number = reverse(number);
+[number, ~] = strtok(number,'_');
+number = reverse(number);
 z0 = str2num(number);
 z0 = z_corner - z0;
 assert(z_corner >= 0);
