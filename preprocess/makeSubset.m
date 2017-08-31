@@ -28,8 +28,13 @@ number = reverse(number);
 [number, ~] = strtok(number,'_');
 number = reverse(number);
 z0 = str2num(number);
+
+if z0 > z_corner
+    error('Slices do not start at low enough number for z_corner.');
+end
+assert(z_corner >= z0);
 z0 = z_corner - z0;
-assert(z_corner >= 0);
+
 
 numslices = min(depth, numslices-z0);
 
@@ -54,7 +59,7 @@ try
     img = imread(namestack{z0+1});
     img = imrotate(img, -rotationCW, 'bilinear', 'crop');
     img = imcrop(img, [x_corner, y_corner, width - 1, height - 1]);
-    h = figure(); imshow(img,'InitialMagnification','fit')
+    h = figure(); imshow(img/max(img(:)),'InitialMagnification','fit')
     if(~input('Is this the slice you want? (1 Yes / 0 No) '))
         stack = false;
         close(h);
