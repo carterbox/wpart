@@ -34,13 +34,27 @@ elseif iscell(stack)
     parfor k = 1:z
         filename = [outdir sprintf('%s_%04i.%s', samplename, k, format )]; 
         %disp(filename);
-        imwrite( stack{k}, filename, format );
+        imwrite( squeeze(stack{k}), filename, format );
     end
 else
     [~,~,z] = size(stack); 
     parfor k = 1:z
         filename = [ outdir sprintf('%s_%04i.%s', samplename, k, format )];
-        imwrite( stack(:,:,k), filename, format );
+        if strcmpi(format,'TIFF')
+            t = Tiff(filename, 'w');
+            t.setTag('ImageWidth', size(stack, 2));
+            t.setTag('ImageLength', size(stack, 1));
+            t.setTag('Photometric', Tiff.Photometric.MinIsBlack);
+            t.setTag('BitsPerSample', 32);
+            t.setTag('SamplesPerPixel', 1);
+            t.setTag('SampleFormat', Tiff.SampleFormat.IEEEFP);
+            t.setTag('Compression', Tiff.Compression.None);
+            t.setTag('PlanarConfiguration',Tiff.PlanarConfiguration.Chunky);
+            t.write(single(stack(:,:,k)));
+            t.close();
+        else
+            imwrite( stack(:,:,k), filename, format );
+        end
     end
 end
 end
