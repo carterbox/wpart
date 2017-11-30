@@ -317,7 +317,7 @@ classdef tomography
                 for chunk_start = 1:stride:z
                     chunk = stack(:,:,chunk_start:min([chunk_start+stride-1;z]));
                     % Color Segmentation
-                    chunk = obj.labels{key}(chunk + 1);
+                    chunk = obj.labels{key}(uint16(chunk) + 1);
                     chunk = removeislands(chunk, 8, 100);
                     stack(:,:,chunk_start:min([chunk_start+stride-1;z])) = chunk;
                 end
