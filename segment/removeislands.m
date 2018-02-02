@@ -18,19 +18,25 @@ function [ B ] = removeislands( A, CONNECTIVITY, minislandsize )
 %CONNECTIVITY = 6;   % 2D: 4 or 8
                     % 3D: 6, 18, or 26;
                     
+% NEW: Don't blend beyond 3
+                    
 %% -----------------------------------------------------------------------
 numparts = max(A(:));
 binarylayers = cell(numparts,1);
 
 % Convert the image into a sequency of binary arrays and remove islands.
 parfor i = 2:numparts
-    binarylayers{i} = uint8(bwareaopen(A >= i, minislandsize, CONNECTIVITY));
+    if i > 3
+        binarylayers{i} = uint8(A >= i);
+    else
+        binarylayers{i} = uint8(bwareaopen(A >= i, minislandsize, CONNECTIVITY));
+    end
     %figure(i),imshow(uint8(binarylayers{i}(:,:,1)*255));
 end
 
 % Recombine the layers.
 B = ones(size(A),'uint8');
-for i = 2:numparts;
+for i = 2:numparts
     B = B + binarylayers{i};
 end
 end
